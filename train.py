@@ -1,20 +1,20 @@
+from keras.optimizers import Adam
 from os import path
 
 import argparse
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Embedding, Input, Conv1D, MaxPooling1D, Flatten, BatchNormalization, SpatialDropout1D
 from keras.preprocessing import sequence
 from keras.utils import to_categorical
-from keras import regularizers
 from keras.callbacks import Callback
-from keras.preprocessing.text import Tokenizer
-from keras.models import load_model, Model
 
 import numpy as np
-import json
 import sklearn.metrics as metrics
-from sklearn.model_selection import train_test_split
 import logging
+
+from models import get_model
+from preprocessing.embeddings import restore_from_file
+from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader
+from preprocessing.text import Tokenizer
+
 logging.getLogger().setLevel(logging.INFO)
 
 
@@ -28,10 +28,13 @@ class EvalCallback(Callback):
 
     def evaluate(self):
         Y_test_pred = [np.argmax(prediction) for prediction in self.model.predict(self.X_test)]
-        logging.info("[%s] Accuracy: %.4f" % (self.name, metrics.accuracy_score(self.Y_test, Y_test_pred)))
-        logging.info("[%s] Macro-Precision: %.4f" % (self.name, metrics.precision_score(self.Y_test, Y_test_pred, average="macro")))
-        logging.info("[%s] Macro-Recall: %.4f" % (self.name, metrics.recall_score(self.Y_test, Y_test_pred, average="macro")))
-        logging.info("[%s] Macro-F1: %.4f" % (self.name, metrics.f1_score(self.Y_test, Y_test_pred, average="macro")))
+        logging.info("[%10s] Accuracy: %.4f, Prec: %.4f, Rec: %.4f, F1: %.4f" % (
+            self.name,
+            metrics.accuracy_score(self.Y_test, Y_test_pred),
+            metrics.precision_score(self.Y_test, Y_test_pred, average="macro"),
+            metrics.recall_score(self.Y_test, Y_test_pred, average="macro"),
+            metrics.f1_score(self.Y_test, Y_test_pred, average="macro")
+        ))
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
@@ -41,76 +44,13 @@ class FileProvider:
     def __init__(self, workdir):
         self.model = path.join(workdir, 'model.h5')
         self.model_json = path.join(workdir, 'model.json')
+        self.logs = path.join(workdir, 'logs')
         self.input_dir = path.join(workdir, 'input')
         self.semeval_train = path.join(self.input_dir, 'semeval_train')
         self.semeval_test = path.join(self.input_dir, 'semeval_test')
-
-
-class SemEvalDatasetReader:
-    def __init__(self, dataset_path: str):
-        X_path = dataset_path+".text"
-        Y_path = dataset_path+".labels"
-
-        logging.info("Loading SemEval dataset: %s" % dataset_path)
-        self.X = self._load_texts(X_path)
-        self.Y, self.Y_dictionary = self._load_labels(Y_path)
-        assert len(self.X) == len(self.Y)
-        logging.info("Loaded %d samples for dataset %s" % (len(self.Y), dataset_path))
-
-    @staticmethod
-    def _load_labels(path: str) -> (list, dict):
-        labels = []
-        dictionary = {}
-        with open(path, 'r', encoding="utf-8") as reader:
-            for line in reader:
-                label = int(line.rstrip())
-                labels.append(label)
-                dictionary[label] = label
-        return np.array(labels), dictionary
-
-    @staticmethod
-    def _load_texts(path: str) -> list:
-        texts = []
-        row = 0
-        with open(path, 'r', encoding="utf-8") as reader:
-            for line in reader:
-                line = line.strip()
-                texts.append(line)
-
-                row += 1
-                if row % 10000 == 0:
-                    logging.debug("  Loaded %dk texts" % (len(texts) / 1000))
-        return texts
-
-
-class EvalitaDatasetReader:
-    def __init__(self, dataset_path: str):
-        logging.info("Loading Evalita dataset: %s" % dataset_path)
-        self.X, self.Y, self.Y_dictionary = self._load(dataset_path)
-        logging.info("Loaded %d samples with %d classes for dataset %s" % (len(self.Y), len(self.Y_dictionary), dataset_path))
-
-    @staticmethod
-    def _load(path: str) -> (list, list, dict):
-        texts = []
-        labels = []
-        dictionary = {}
-
-        row = 0
-        with open(path, 'r', encoding="utf-8") as reader:
-            for line in reader:
-                line = line.rstrip()
-                sample = json.loads(line)
-                texts.append(sample["text_no_emoji"])
-                label = sample["label"]
-                if label not in dictionary:
-                    dictionary[label] = len(dictionary)
-                labels.append(dictionary[label])
-
-                row += 1
-                if row % 10000 == 0:
-                    logging.debug("  Loaded %dk texts" % (len(texts) / 1000))
-
-        return texts, np.array(labels), dictionary
+        self.evalita = path.join(self.input_dir, 'evalita_train.json')
+        self.evalita_train = path.join(self.input_dir, 'evalita_split_train.json')
+        self.evalita_test = path.join(self.input_dir, 'evalita_split_test.json')
 
 
 if __name__ == '__main__':
@@ -121,34 +61,49 @@ if __name__ == '__main__':
                         help='The directory with the precomputed embeddings')
     parser.add_argument('--workdir', required=True,
                         help='Work path')
+    parser.add_argument('--evalita', default=False, action='store_true', help='Train and test on EVALITA2018 dataset')
+    parser.add_argument('--semeval', default=False, action='store_true', help='Train and test on SemEval2018 dataset')
     parser.add_argument('--batch-size', type=int, default=256,
                         help='The size of a mini-batch')
     parser.add_argument('--max-dict', type=int, default=300000,
                         help='Maximum dictionary size')
-    parser.add_argument('--max-epoch', type=int, default=5,
+    parser.add_argument('--max-epoch', type=int, default=20,
                         help='The maximum epoch number')
     parser.add_argument('--max-seq-length', type=int, default=40,
                         help='Maximum sequence length')
 
     args = parser.parse_args()
     files = FileProvider(args.workdir)
-    logging.info("Starting training with parameters:", vars(args))
+    logging.info("Starting training with parameters: {0}".format(vars(args)))
 
     """##### Loading the dataset"""
 
-    semeval_train = SemEvalDatasetReader(files.semeval_train)
-    semeval_test = SemEvalDatasetReader(files.semeval_test)
+    if args.semeval:
+        raw_train = SemEvalDatasetReader(files.semeval_train)
+        raw_test = SemEvalDatasetReader(files.semeval_test)
+    else:
+        if not path.exists(files.evalita_train):
+            raw_train, raw_test = EvalitaDatasetReader(files.evalita).split()
+        else:
+            raw_train = EvalitaDatasetReader(files.evalita_train)
+            raw_test = EvalitaDatasetReader(files.evalita_test)
 
-    tokenizer = Tokenizer(num_words=args.max_dict, lower=True, oov_token="<unk>")
-    tokenizer.fit_on_texts(semeval_train.X)
-    vocabulary_size = max(len(tokenizer.word_index), args.max_dict)
+    tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
+    tokenizer.fit_on_texts(raw_train.X)
+    vocabulary_size = min(len(tokenizer.word_index), args.max_dict)
     logging.info("Vocabulary size: %d, Total words: %d" % (vocabulary_size, len(tokenizer.word_counts)))
 
-    X_train = tokenizer.texts_to_sequences(semeval_train.X)
-    Y_train = semeval_train.Y
-    X_test = tokenizer.texts_to_sequences(semeval_test.X)
-    Y_test = semeval_test.Y
-    Y_dictionary = semeval_train.Y_dictionary
+    X_train = tokenizer.texts_to_sequences(raw_train.X)
+    Y_train = raw_train.Y
+    X_test = tokenizer.texts_to_sequences(raw_test.X)
+    Y_test = raw_test.Y
+    Y_dictionary = raw_train.Y_dictionary
+    Y_class_weights = len(Y_train) / np.power(np.bincount(Y_train), 1.3)
+    Y_class_weights *= 1.0 / np.min(Y_class_weights)
+    logging.info("Class weights: %s" % str(Y_class_weights))
+
+    del raw_train
+    del raw_test
 
     logging.info("Padding train and test")
 
@@ -162,41 +117,45 @@ if __name__ == '__main__':
     X_test = sequence.pad_sequences(X_test, maxlen=max_seq_length)
 
     """##### Initializing embeddings"""
+    logging.info("Initializing embeddings")
 
     embedding_size = 300
+    embeddings = None
     if args.embeddings:
         # Init embeddings here
-        pass
+        words = set(tokenizer.word_index.keys())
+        embeddings, embedding_size = restore_from_file(args.embeddings, words, lower=True)
 
     # ReLU Xavier initialization
-    embedding_matrix = np.random.randn(vocabulary_size, embedding_size).astype(np.float32) * np.sqrt(2.0/(vocabulary_size))
+    embedding_matrix = np.random.randn(vocabulary_size, embedding_size).astype(np.float32) * np.sqrt(2.0/vocabulary_size)
+
+    if embeddings is not None:
+        restored = 0
+        for word in embeddings:
+            word_id = tokenizer.resolve_word(word)
+            if word_id is not None:
+                embedding_matrix[word_id] = embeddings[word]
+                restored += 1
+        logging.info("Restored %d (%.2f%%) embeddings" % (restored, (float(restored) / vocabulary_size) * 100))
+    del embeddings
 
     """##### Model definition"""
+    logging.info("Initializing model")
 
-    DROPOUT_RATE = 0.4
-
-    model = Sequential()
-    model.add(Embedding(input_dim=vocabulary_size,
-                        output_dim=embedding_size,
-                        weights=[embedding_matrix],
-                        input_length=max_seq_length,
-                        trainable=True))
-    model.add(Dropout(DROPOUT_RATE))
-    model.add(Conv1D(filters=512, kernel_size=5, activation='relu', padding="same"))
-    model.add(Dropout(DROPOUT_RATE))
-    model.add(MaxPooling1D(pool_size=5))
-    model.add(Flatten())
-    model.add(Dropout(DROPOUT_RATE))
-    model.add(Dense(len(Y_dictionary), activation='softmax'))
-
-    model.compile(loss='categorical_crossentropy',
-                  optimizer='rmsprop',
-                  metrics=['accuracy'])
+    params = {
+        "vocabulary_size": vocabulary_size,
+        "embedding_size": embedding_size,
+        "max_seq_length": max_seq_length,
+        "embedding_matrix": embedding_matrix,
+        "y_dictionary": Y_dictionary
+    }
+    model = get_model("base_cnn").apply(params)
 
     """##### Load model"""
 
-    if path.exists(files.model):
-        model.load_weights(files.model)
+    # needs also storing&restoring of the current epoch, also not sure Adam weights are preserved
+    #if path.exists(files.model):
+    #    model.load_weights(files.model)
 
     """##### Continue with model"""
 
@@ -210,7 +169,8 @@ if __name__ == '__main__':
     }
     model.fit(X_train,
               Y_train_one_hot,
-              epochs=args.max_epoch * 2,
+              class_weight=Y_class_weights,
+              epochs=args.max_epoch,
               batch_size=args.batch_size,
               shuffle=True,
               callbacks=[callback for callback in callbacks.values()])
