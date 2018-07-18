@@ -12,10 +12,9 @@ def base_cnn(vocabulary_size: int, embedding_size: int, max_seq_length: int, emb
                         weights=[embedding_matrix],
                         input_length=max_seq_length,
                         trainable=True,
-                        embeddings_regularizer=regularizers.l2(0.00001)))
+                        embeddings_regularizer=regularizers.l2(0.000001)))
     model.add(Dropout(0.4))
-    model.add(Conv1D(filters=512, kernel_size=5, activation='relu', padding="same", activity_regularizer=regularizers.l2(0.00001)))
-    #model.add(Dropout(0.4))
+    model.add(Conv1D(filters=512, kernel_size=5, activation='relu', padding="same", kernel_regularizer=regularizers.l2(0.00001)))
     model.add(MaxPooling1D(pool_size=5))
     model.add(Flatten())
     model.add(Dropout(0.4))

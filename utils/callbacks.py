@@ -5,12 +5,13 @@ from sklearn import metrics
 
 
 class EvalCallback(Callback):
-    def __init__(self, name, X_test, Y_test):
+    def __init__(self, name, X_test, Y_test, period=1):
         super(EvalCallback, self).__init__()
 
         self.name = name
         self.X_test = X_test
         self.Y_test = Y_test
+        self.period = period
 
     def get_predictions(self) -> list:
         return [np.argmax(prediction) for prediction in self.model.predict(self.X_test)]
@@ -33,7 +34,8 @@ class EvalCallback(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
-        self.evaluate()
+        if (epoch+1) % self.period == 0:
+            self.evaluate()
 
 
 class ValidationEarlyStopping(Callback):
@@ -81,4 +83,4 @@ class ValidationEarlyStopping(Callback):
 
     def on_train_end(self, logs=None):
         if self.stopped_epoch > 0:
-            logging.info('Epoch %05d: early stopping' % (self.stopped_epoch + 1))
+            logging.info('Epoch %d: early stopping' % (self.stopped_epoch + 1))

@@ -148,7 +148,7 @@ if __name__ == '__main__':
 
     callbacks = {
         "test": EvalCallback("test", X_test, Y_test),
-        "train": EvalCallback("train", X_train, Y_train),
+        "train": EvalCallback("train", X_train, Y_train, period=3),
         "val": EvalCallback("validation", X_val, Y_val)
     }
     callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"])
