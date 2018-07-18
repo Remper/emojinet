@@ -1,44 +1,20 @@
-from keras.optimizers import Adam
 from os import path
 
 import argparse
 from keras.preprocessing import sequence
 from keras.utils import to_categorical
-from keras.callbacks import Callback
 
 import numpy as np
-import sklearn.metrics as metrics
 import logging
 
 from models import get_model
 from preprocessing.embeddings import restore_from_file
 from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader
 from preprocessing.text import Tokenizer
+from utils.callbacks import EvalCallback, ValidationEarlyStopping
 
 logging.getLogger().setLevel(logging.INFO)
 
-
-class EvalCallback(Callback):
-    def __init__(self, name, X_test, Y_test):
-        super(EvalCallback, self).__init__()
-
-        self.name = name
-        self.X_test = X_test
-        self.Y_test = Y_test
-
-    def evaluate(self):
-        Y_test_pred = [np.argmax(prediction) for prediction in self.model.predict(self.X_test)]
-        logging.info("[%10s] Accuracy: %.4f, Prec: %.4f, Rec: %.4f, F1: %.4f" % (
-            self.name,
-            metrics.accuracy_score(self.Y_test, Y_test_pred),
-            metrics.precision_score(self.Y_test, Y_test_pred, average="macro"),
-            metrics.recall_score(self.Y_test, Y_test_pred, average="macro"),
-            metrics.f1_score(self.Y_test, Y_test_pred, average="macro")
-        ))
-
-    def on_epoch_end(self, epoch, logs=None):
-        logs = logs or {}
-        self.evaluate()
 
 class FileProvider:
     def __init__(self, workdir):
@@ -65,6 +41,8 @@ if __name__ == '__main__':
     parser.add_argument('--semeval', default=False, action='store_true', help='Train and test on SemEval2018 dataset')
     parser.add_argument('--batch-size', type=int, default=256,
                         help='The size of a mini-batch')
+    parser.add_argument('--embeddings-size', type=int, default=300,
+                        help='Default size of the embeddings if precomputed ones are omitted')
     parser.add_argument('--max-dict', type=int, default=300000,
                         help='Maximum dictionary size')
     parser.add_argument('--max-epoch', type=int, default=20,
@@ -87,6 +65,7 @@ if __name__ == '__main__':
         else:
             raw_train = EvalitaDatasetReader(files.evalita_train)
             raw_test = EvalitaDatasetReader(files.evalita_test)
+    raw_train, raw_val = raw_train.split(test_size=0.1)
 
     tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
     tokenizer.fit_on_texts(raw_train.X)
@@ -95,6 +74,8 @@ if __name__ == '__main__':
 
     X_train = tokenizer.texts_to_sequences(raw_train.X)
     Y_train = raw_train.Y
+    X_val = tokenizer.texts_to_sequences(raw_val.X)
+    Y_val = raw_val.Y
     X_test = tokenizer.texts_to_sequences(raw_test.X)
     Y_test = raw_test.Y
     Y_dictionary = raw_train.Y_dictionary
@@ -103,6 +84,7 @@ if __name__ == '__main__':
     logging.info("Class weights: %s" % str(Y_class_weights))
 
     del raw_train
+    del raw_val
     del raw_test
 
     logging.info("Padding train and test")
@@ -114,12 +96,13 @@ if __name__ == '__main__':
     logging.info("Max sequence length in training set: %d" % max_seq_length)
     max_seq_length = min(max_seq_length, args.max_seq_length)
     X_train = sequence.pad_sequences(X_train, maxlen=max_seq_length)
+    X_val = sequence.pad_sequences(X_val, maxlen=max_seq_length)
     X_test = sequence.pad_sequences(X_test, maxlen=max_seq_length)
 
     """##### Initializing embeddings"""
     logging.info("Initializing embeddings")
 
-    embedding_size = 300
+    embedding_size = args.embeddings_size
     embeddings = None
     if args.embeddings:
         # Init embeddings here
@@ -165,8 +148,10 @@ if __name__ == '__main__':
 
     callbacks = {
         "test": EvalCallback("test", X_test, Y_test),
-        "train": EvalCallback("train", X_train, Y_train)
+        "train": EvalCallback("train", X_train, Y_train),
+        "val": EvalCallback("validation", X_val, Y_val)
     }
+    callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"])
     model.fit(X_train,
               Y_train_one_hot,
               class_weight=Y_class_weights,

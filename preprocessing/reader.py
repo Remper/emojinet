@@ -10,7 +10,7 @@ class DatasetReader:
         self.Y = Y
         self.Y_dictionary = Y_dictionary
 
-    def split(self, test_size=0.2, random_state=42):
+    def split(self, test_size=0.15, random_state=42):
         X_train, X_test, Y_train, Y_test = train_test_split(self.X, self.Y, test_size = test_size, random_state = random_state, stratify = self.Y)
         return DatasetReader(X_train, Y_train, self.Y_dictionary), DatasetReader(X_test, Y_test, self.Y_dictionary)
 
