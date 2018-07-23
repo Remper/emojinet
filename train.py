@@ -41,6 +41,8 @@ if __name__ == '__main__':
     parser.add_argument('--semeval', default=False, action='store_true', help='Train and test on SemEval2018 dataset')
     parser.add_argument('--batch-size', type=int, default=256,
                         help='The size of a mini-batch')
+    parser.add_argument('--embeddings-only', default=False, action='store_true',
+                        help='Only use words from the embeddings vocabulary')
     parser.add_argument('--embeddings-size', type=int, default=300,
                         help='Default size of the embeddings if precomputed ones are omitted')
     parser.add_argument('--max-dict', type=int, default=300000,
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     X_test = tokenizer.texts_to_sequences(raw_test.X)
     Y_test = raw_test.Y
     Y_dictionary = raw_train.Y_dictionary
-    Y_class_weights = len(Y_train) / np.power(np.bincount(Y_train), 1.3)
+    Y_class_weights = len(Y_train) / np.power(np.bincount(Y_train), 1.1)
     Y_class_weights *= 1.0 / np.min(Y_class_weights)
     logging.info("Class weights: %s" % str(Y_class_weights))
 
@@ -109,18 +111,34 @@ if __name__ == '__main__':
         words = set(tokenizer.word_index.keys())
         embeddings, embedding_size = restore_from_file(args.embeddings, words, lower=True)
 
-    # ReLU Xavier initialization
-    embedding_matrix = np.random.randn(vocabulary_size, embedding_size).astype(np.float32) * np.sqrt(2.0/vocabulary_size)
-
-    if embeddings is not None:
-        restored = 0
+    if embeddings is not None and args.embeddings_only:
+        resolved = []
         for word in embeddings:
             word_id = tokenizer.resolve_word(word)
             if word_id is not None:
-                embedding_matrix[word_id] = embeddings[word]
-                restored += 1
-        logging.info("Restored %d (%.2f%%) embeddings" % (restored, (float(restored) / vocabulary_size) * 100))
+                resolved.append(embeddings[word])
+        logging.info("Restored %d embeddings" % len(resolved))
+        embedding_matrix = np.vstack(resolved)
+        vocabulary_size = len(resolved)
+        del resolved
+    else:
+        # ReLU Xavier initialization
+        embedding_matrix = np.random.randn(vocabulary_size, embedding_size).astype(np.float32) # * np.sqrt(2.0/vocabulary_size)
+
+        if embeddings is not None:
+            restored = 0
+            for word in embeddings:
+                word_id = tokenizer.resolve_word(word)
+                if word_id is not None:
+                    embedding_matrix[word_id] = embeddings[word]
+                    restored += 1
+            logging.info("Restored %d (%.2f%%) embeddings" % (restored, (float(restored) / vocabulary_size) * 100))
     del embeddings
+
+    # Rescaling embeddings
+    means = np.mean(embedding_matrix, axis=0)
+    variance = np.sqrt(np.mean((embedding_matrix - means) ** 2, axis=0))
+    embedding_matrix = (embedding_matrix - means) / variance
 
     """##### Model definition"""
     logging.info("Initializing model")
