@@ -9,3 +9,17 @@ python src/train.py \
         --max-epoch 40 \
         --semeval
 ```
+
+### Data analysis
+
+```
+python3 data_analysis/data_analysis.py 
+        --workdir evalita_data
+```
+
+This script will output a file containing total number, unique number and distributions of:
+* tokens
+* hashtags
+* mentions
+* URLS
+* labels
