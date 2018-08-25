@@ -109,5 +109,8 @@ venv.bak/
 # PyCharm cache
 .idea/*
 
-# EVALITA2018 data
+# EVALITA2018 data directory
 evalita_data
+
+# embeddings directory
+embeddings

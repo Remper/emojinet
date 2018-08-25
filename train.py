@@ -38,6 +38,7 @@ if __name__ == '__main__':
                         help='The maximum epoch number')
     parser.add_argument('--max-seq-length', type=int, default=40,
                         help='Maximum sequence length')
+    parser.add_argument('--embeddings-skip-first-line', default=False, action='store_true', help='Skip first line of the embeddings')
 
     args = parser.parse_args()
     files = FileProvider(args.workdir)
@@ -96,7 +97,7 @@ if __name__ == '__main__':
     if args.embeddings:
         # Init embeddings here
         words = set(tokenizer.word_index.keys())
-        embeddings, embedding_size = restore_from_file(args.embeddings, words, lower=True)
+        embeddings, embedding_size = restore_from_file(args.embeddings, words, lower=True, skip_first_line = args.embeddings_skip_first_line)
 
     if embeddings is not None and args.embeddings_only:
         resolved = []
