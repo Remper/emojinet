@@ -3,7 +3,8 @@ import numpy as np
 
 class Converter:
     def __init__(self, sequence_max_length=1024):
-        self.alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:’"/|_#$%ˆ&*˜‘+=<>()[]{} '
+        #self.alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:’"/|_#$%ˆ&*˜‘+=<>()[]{} '
+        self.alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:’"/|_#$%ˆ&*˜‘+=<>()[]{} àòèéù'
         self.char_dict = {}
         self.sequence_max_length = sequence_max_length
         for i, c in enumerate(self.alphabet):
