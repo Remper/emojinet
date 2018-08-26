@@ -23,3 +23,16 @@ This script will output a file containing total number, unique number and distri
 * mentions
 * URLS
 * labels
+
+### VDCNN
+
+```
+python3 train_vdcnn.py 
+        --workdir evalita_data
+        --max-seq-length 512
+        --pool-type k_max
+        --depth 29
+        --shortcut
+        --bias
+
+```

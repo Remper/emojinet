@@ -5,6 +5,9 @@ from keras.engine import Layer, InputSpec
 from keras.optimizers import SGD
 import tensorflow as tf
 
+"""
+This model is an adapted version of https://github.com/zonetrooper32/VDCNN
+"""
 
 class KMaxPooling(Layer):
     """
@@ -33,10 +36,10 @@ class KMaxPooling(Layer):
 
 
 def identity_block(inputs, filters, kernel_size=3, use_bias=False, shortcut=False):
-    conv1 = Conv1D(filters=filters, kernel_size=kernel_size, strides=1, padding='same')(inputs)
+    conv1 = Conv1D(filters=filters, kernel_size=kernel_size, strides=1, padding='same', use_bias=use_bias)(inputs)
     bn1 = BatchNormalization()(conv1)
     relu = Activation('relu')(bn1)
-    conv2 = Conv1D(filters=filters, kernel_size=kernel_size, strides=1, padding='same')(relu)
+    conv2 = Conv1D(filters=filters, kernel_size=kernel_size, strides=1, padding='same', use_bias=use_bias)(relu)
     out = BatchNormalization()(conv2)
     if shortcut:
         out = Add()([out, inputs])
@@ -45,11 +48,11 @@ def identity_block(inputs, filters, kernel_size=3, use_bias=False, shortcut=Fals
 
 def conv_block(inputs, filters, kernel_size=3, use_bias=False, shortcut=False,
                pool_type='max', sorted=True, stage=1):
-    conv1 = Conv1D(filters=filters, kernel_size=kernel_size, strides=1, padding='same')(inputs)
+    conv1 = Conv1D(filters=filters, kernel_size=kernel_size, strides=1, padding='same', use_bias=use_bias)(inputs)
     bn1 = BatchNormalization()(conv1)
     relu1 = Activation('relu')(bn1)
 
-    conv2 = Conv1D(filters=filters, kernel_size=kernel_size, strides=1, padding='same')(relu1)
+    conv2 = Conv1D(filters=filters, kernel_size=kernel_size, strides=1, padding='same', use_bias=use_bias)(relu1)
     out = BatchNormalization()(conv2)
 
     if shortcut:

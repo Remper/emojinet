@@ -1,16 +1,13 @@
 from os import path
 
 import argparse
-from keras.preprocessing import sequence
 from keras.utils import to_categorical
 
 import numpy as np
 import logging
 
 from models import get_model
-from preprocessing.embeddings import restore_from_file
 from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader
-from preprocessing.text import Tokenizer
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from utils.fileprovider import FileProvider
 from utils.converter import Converter
@@ -37,7 +34,7 @@ if __name__ == "__main__":
     # Model parameters
     parser.add_argument("--max-seq-length", type=int, default=1024,
                         help="Maximum sequence length (default: 1024)")
-    parser.add_argument("--pool-type", choices=["max, k_max", "conv"], default="max",
+    parser.add_argument("--pool-type", choices=["max", "k_max", "conv"], default="max",
                         help="Types of downsampling methods [max, k_max, conv] (default: \"max\"")
     parser.add_argument("--depth", type=int, choices=[9, 17, 29, 47], default=9,
                         help="Depth for VDCNN [9, 17, 29, 47] (defalut: 9)")
@@ -87,8 +84,6 @@ if __name__ == "__main__":
     del raw_train
     del raw_val
     del raw_test
-
-    print(X_train[0])
 
     """##### Model definition"""
     logging.info("Initializing model")
