@@ -28,8 +28,9 @@ This script will output a file containing total number, unique number and distri
 
 ```
 python3 train_vdcnn.py 
+        --evalita
         --workdir evalita_data
-        --max-seq-length 512
+        --max-seq-length 1024
         --pool-type k_max
         --depth 29
         --shortcut

@@ -37,7 +37,7 @@ if __name__ == "__main__":
     parser.add_argument("--pool-type", choices=["max", "k_max", "conv"], default="max",
                         help="Types of downsampling methods [max, k_max, conv] (default: \"max\"")
     parser.add_argument("--depth", type=int, choices=[9, 17, 29, 47], default=9,
-                        help="Depth for VDCNN [9, 17, 29, 47] (defalut: 9)")
+                        help="Depth for VDCNN [9, 17, 29, 49] (defalut: 9)")
     parser.add_argument("--shortcut", default=False, action="store_true",
                         help="Use optional shortcut (default: False)")
     parser.add_argument("--sorted", default=False, action="store_true",
