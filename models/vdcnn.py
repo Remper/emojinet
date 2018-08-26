@@ -102,9 +102,14 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
     # ReLU Xavier initialization
     embedding_matrix = np.random.randn(sequence_length, embedding_dim).astype(np.float32) * np.sqrt(2.0/sequence_length)
 
+    # Rescaling embeddings
+    means = np.mean(embedding_matrix, axis=0)
+    variance = np.sqrt(np.mean((embedding_matrix - means) ** 2, axis=0))
+    embedding_matrix = (embedding_matrix - means) / variance
+
 
     inputs = Input(shape=(sequence_length, ), name='inputs')
-    embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim, weights=[embedding_matrix])(inputs)
+    embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim, weights=[embedding_matrix], trainable=True)(inputs)
     out = Conv1D(filters=64, kernel_size=3, strides=1, padding='same', name='temp_conv')(embedded_chars)
 
     # Convolutional Block 64
