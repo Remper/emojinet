@@ -12,6 +12,8 @@ from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from utils.fileprovider import FileProvider
 from utils.converter import Converter
 
+import os
+
 logging.getLogger().setLevel(logging.INFO)
 
 """
@@ -26,10 +28,12 @@ if __name__ == "__main__":
     # General parameters
     parser.add_argument("--workdir", required=True,
                         help="Work path")
-    parser.add_argument('--evalita', default=False, action='store_true',
-                        help='Train and test on EVALITA2018 dataset')
-    parser.add_argument('--semeval', default=False, action='store_true',
-                        help='Train and test on SemEval2018 dataset')
+    parser.add_argument("--evalita", default=False, action="store_true",
+                        help="Train and test on EVALITA2018 dataset")
+    parser.add_argument("--semeval", default=False, action="store_true",
+                        help="Train and test on SemEval2018 dataset")
+    parser.add_argument("--gpu", type=int, default=0,
+                        help="GPU ID to be used [0, 1, -1]")
 
     # Model parameters
     parser.add_argument("--max-seq-length", type=int, default=1024,
@@ -52,7 +56,11 @@ if __name__ == "__main__":
                         help="The maximum epoch number (default: 100)")
 
     args = parser.parse_args()
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.gpu)
+
     files = FileProvider(args.workdir)
+
     logging.info("Starting training with parameters: {0}".format(vars(args)))
 
     """##### Loading the dataset"""
