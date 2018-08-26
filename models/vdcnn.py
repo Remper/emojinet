@@ -104,7 +104,7 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
 
 
     inputs = Input(shape=(sequence_length, ), name='inputs')
-    embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim, embedding_matrix=embedding_matrix)(inputs)
+    embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim, weights=[embedding_matrix])(inputs)
     out = Conv1D(filters=64, kernel_size=3, strides=1, padding='same', name='temp_conv')(embedded_chars)
 
     # Convolutional Block 64
