@@ -2,7 +2,7 @@ from keras.models import Model
 from keras.layers import Input, Embedding, Conv1D, BatchNormalization, Activation, Add, MaxPooling1D, Dense, Flatten
 from keras.engine.topology import get_source_inputs
 from keras.engine import Layer, InputSpec
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adam
 import tensorflow as tf
 import numpy as np
 
@@ -109,6 +109,7 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
 
 
     inputs = Input(shape=(sequence_length, ), name='inputs')
+    #embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim)(inputs)
     embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim, weights=[embedding_matrix], trainable=True)(inputs)
     out = Conv1D(filters=64, kernel_size=3, strides=1, padding='same', name='temp_conv')(embedded_chars)
 
@@ -152,7 +153,8 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
 
     # Create model.
     model = Model(inputs=inputs, outputs=out, name='VDCNN')
-    optimizer = SGD(lr=0.01, momentum=0.9)
+    #optimizer = SGD(lr=0.01, momentum=0.9)
+    optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.001)
     model.compile(loss='categorical_crossentropy',
                   optimizer=optimizer,
                   metrics=['accuracy'])
