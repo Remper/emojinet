@@ -99,7 +99,7 @@ class FastText:
                 if res_index >= max_chars:
                     break
                 result[res_index] = ngram
-                mask[i][res_index] = 1.0
+                mask[i][res_index] = 1.0 / len(ngrams)
                 res_index += 1
 
         return result, mask
