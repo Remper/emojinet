@@ -13,6 +13,7 @@ from scipy import sparse
 from models import get_model
 from preprocessing.fasttext import FastText
 from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader
+from utils import get_model_memory_usage
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 
 logging.getLogger().setLevel(logging.INFO)
@@ -86,7 +87,7 @@ if __name__ == '__main__':
             max_char_length = len(ngrams)
     logging.info("Max lengths in training set. seq: %d char: %d" % (max_seq_length, max_char_length))
     max_seq_length = min(max_seq_length, args.max_seq_length)
-    max_char_length = min(max_char_length, 3000)
+    #max_char_length = min(max_char_length, 3500)
 
     def convert_input(raw_input):
         output = []
@@ -166,6 +167,9 @@ if __name__ == '__main__':
                 yield ({'main_input': X_train[pointer:pointer+batch_size], 'mask_input': X_train_mask[pointer:pointer+batch_size]}, Y_train_one_hot[pointer:pointer+batch_size])
                 pointer += batch_size
             yield ({'main_input': X_train[pointer:], 'mask_input': X_train_mask[pointer:]}, Y_train_one_hot[pointer:])
+
+    usage, shapes, trainable, non_trainable = get_model_memory_usage(args.batch_size, model)
+    print("Model memory usage: %2fGB (%2f, %2f, %2f)" % (usage, shapes, trainable, non_trainable))
 
     model.fit_generator(generator(),
         steps_per_epoch=ceil(X_train.shape[0] / args.batch_size),
