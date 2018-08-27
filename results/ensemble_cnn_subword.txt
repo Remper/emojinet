@@ -1,0 +1,186 @@
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to
+==================================================================================================
+main_input (InputLayer)         (None, 4027)         0
+__________________________________________________________________________________________________
+mask_input (InputLayer)         (None, 40, 4027)     0
+__________________________________________________________________________________________________
+embedding_1 (Embedding)         (None, 4027, 100)    200000000   main_input[0][0]
+__________________________________________________________________________________________________
+lambda_1 (Lambda)               (None, 40, 100)      0           mask_input[0][0]
+                                                                 embedding_1[0][0]
+__________________________________________________________________________________________________
+dropout_1 (Dropout)             (None, 40, 100)      0           lambda_1[0][0]
+__________________________________________________________________________________________________
+dropout_2 (Dropout)             (None, 40, 100)      0           lambda_1[0][0]
+__________________________________________________________________________________________________
+conv1d_1 (Conv1D)               (None, 40, 512)      154112      dropout_1[0][0]
+__________________________________________________________________________________________________
+conv1d_2 (Conv1D)               (None, 40, 512)      205312      dropout_2[0][0]
+__________________________________________________________________________________________________
+max_pooling1d_1 (MaxPooling1D)  (None, 8, 512)       0           conv1d_1[0][0]
+__________________________________________________________________________________________________
+max_pooling1d_2 (MaxPooling1D)  (None, 8, 512)       0           conv1d_2[0][0]
+__________________________________________________________________________________________________
+global_average_pooling1d_1 (Glo (None, 100)          0           lambda_1[0][0]
+__________________________________________________________________________________________________
+flatten_1 (Flatten)             (None, 4096)         0           max_pooling1d_1[0][0]
+__________________________________________________________________________________________________
+flatten_2 (Flatten)             (None, 4096)         0           max_pooling1d_2[0][0]
+__________________________________________________________________________________________________
+dense_1 (Dense)                 (None, 4096)         413696      global_average_pooling1d_1[0][0]
+__________________________________________________________________________________________________
+average_1 (Average)             (None, 4096)         0           flatten_1[0][0]
+                                                                 flatten_2[0][0]
+                                                                 dense_1[0][0]
+__________________________________________________________________________________________________
+dropout_3 (Dropout)             (None, 4096)         0           average_1[0][0]
+__________________________________________________________________________________________________
+dense_2 (Dense)                 (None, 25)           102425      dropout_3[0][0]
+==================================================================================================
+Total params: 200,875,545
+Trainable params: 200,875,545
+Non-trainable params: 0
+__________________________________________________________________________________________________
+
+Epoch 1/40
+748/748 [==============================] - 427s 570ms/step - loss: 133.0588 - acc: 0.3811
+INFO:root:[      test] Accuracy: 0.4106, Prec: 0.3099, Rec: 0.1613, F1: 0.1595
+INFO:root:[validation] Accuracy: 0.4080, Prec: 0.3281, Rec: 0.1577, F1: 0.1544
+Epoch 2/40
+748/748 [==============================] - 406s 543ms/step - loss: 56.9542 - acc: 0.4165
+INFO:root:[      test] Accuracy: 0.4225, Prec: 0.3554, Rec: 0.1853, F1: 0.1910
+INFO:root:[validation] Accuracy: 0.4223, Prec: 0.3594, Rec: 0.1841, F1: 0.1914
+Epoch 3/40
+748/748 [==============================] - 387s 518ms/step - loss: 26.4193 - acc: 0.4272
+INFO:root:[      test] Accuracy: 0.4278, Prec: 0.3622, Rec: 0.2015, F1: 0.2098
+INFO:root:[validation] Accuracy: 0.4277, Prec: 0.3963, Rec: 0.2010, F1: 0.2113
+Epoch 4/40
+748/748 [==============================] - 397s 531ms/step - loss: 13.5755 - acc: 0.4337
+INFO:root:[      test] Accuracy: 0.4304, Prec: 0.4119, Rec: 0.2056, F1: 0.2174
+INFO:root:[validation] Accuracy: 0.4305, Prec: 0.4098, Rec: 0.2050, F1: 0.2176
+Epoch 5/40
+748/748 [==============================] - 399s 534ms/step - loss: 7.9150 - acc: 0.4393
+INFO:root:[      test] Accuracy: 0.4335, Prec: 0.4116, Rec: 0.2131, F1: 0.2247
+INFO:root:[validation] Accuracy: 0.4334, Prec: 0.4484, Rec: 0.2125, F1: 0.2257
+Epoch 6/40
+748/748 [==============================] - 396s 530ms/step - loss: 5.2983 - acc: 0.4435
+INFO:root:[      test] Accuracy: 0.4358, Prec: 0.4048, Rec: 0.2116, F1: 0.2267
+INFO:root:[validation] Accuracy: 0.4357, Prec: 0.4604, Rec: 0.2112, F1: 0.2285
+Epoch 7/40
+748/748 [==============================] - 401s 537ms/step - loss: 4.0190 - acc: 0.4477
+INFO:root:[      test] Accuracy: 0.4375, Prec: 0.4101, Rec: 0.2145, F1: 0.2308
+INFO:root:[validation] Accuracy: 0.4362, Prec: 0.4320, Rec: 0.2124, F1: 0.2307
+Epoch 8/40
+748/748 [==============================] - 398s 532ms/step - loss: 3.3527 - acc: 0.4516
+INFO:root:[      test] Accuracy: 0.4390, Prec: 0.4329, Rec: 0.2177, F1: 0.2345
+INFO:root:[validation] Accuracy: 0.4373, Prec: 0.4653, Rec: 0.2157, F1: 0.2359
+Epoch 9/40
+748/748 [==============================] - 404s 540ms/step - loss: 2.9805 - acc: 0.4556
+INFO:root:[      test] Accuracy: 0.4394, Prec: 0.4245, Rec: 0.2202, F1: 0.2371
+INFO:root:[validation] Accuracy: 0.4382, Prec: 0.4312, Rec: 0.2182, F1: 0.2379
+Epoch 10/40
+748/748 [==============================] - 403s 538ms/step - loss: 2.7590 - acc: 0.4585
+INFO:root:[      test] Accuracy: 0.4409, Prec: 0.4083, Rec: 0.2266, F1: 0.2422
+INFO:root:[validation] Accuracy: 0.4392, Prec: 0.4113, Rec: 0.2240, F1: 0.2428
+Epoch 11/40
+748/748 [==============================] - 407s 544ms/step - loss: 2.6138 - acc: 0.4618
+INFO:root:[      test] Accuracy: 0.4414, Prec: 0.4193, Rec: 0.2244, F1: 0.2418
+INFO:root:[validation] Accuracy: 0.4398, Prec: 0.4292, Rec: 0.2215, F1: 0.2424
+Epoch 12/40
+748/748 [==============================] - 401s 537ms/step - loss: 2.5148 - acc: 0.4651
+INFO:root:[      test] Accuracy: 0.4427, Prec: 0.4097, Rec: 0.2279, F1: 0.2463
+INFO:root:[validation] Accuracy: 0.4407, Prec: 0.4170, Rec: 0.2253, F1: 0.2461
+Epoch 13/40
+748/748 [==============================] - 396s 529ms/step - loss: 2.4394 - acc: 0.4686
+INFO:root:[      test] Accuracy: 0.4420, Prec: 0.3984, Rec: 0.2343, F1: 0.2502
+INFO:root:[validation] Accuracy: 0.4393, Prec: 0.3836, Rec: 0.2286, F1: 0.2472
+Epoch 14/40
+748/748 [==============================] - 374s 500ms/step - loss: 2.3832 - acc: 0.4706
+INFO:root:[      test] Accuracy: 0.4432, Prec: 0.3999, Rec: 0.2347, F1: 0.2529
+INFO:root:[validation] Accuracy: 0.4401, Prec: 0.4005, Rec: 0.2299, F1: 0.2507
+Epoch 15/40
+748/748 [==============================] - 373s 498ms/step - loss: 2.3346 - acc: 0.4743
+INFO:root:[      test] Accuracy: 0.4447, Prec: 0.4127, Rec: 0.2321, F1: 0.2540
+INFO:root:[validation] Accuracy: 0.4421, Prec: 0.3995, Rec: 0.2278, F1: 0.2519
+Epoch 16/40
+748/748 [==============================] - 373s 499ms/step - loss: 2.2948 - acc: 0.4771
+INFO:root:[      test] Accuracy: 0.4443, Prec: 0.3898, Rec: 0.2377, F1: 0.2566
+INFO:root:[validation] Accuracy: 0.4412, Prec: 0.3846, Rec: 0.2323, F1: 0.2535
+Epoch 17/40
+748/748 [==============================] - 372s 498ms/step - loss: 2.2598 - acc: 0.4797
+INFO:root:[      test] Accuracy: 0.4429, Prec: 0.3836, Rec: 0.2411, F1: 0.2587
+INFO:root:[validation] Accuracy: 0.4415, Prec: 0.3791, Rec: 0.2370, F1: 0.2573
+Epoch 18/40
+748/748 [==============================] - 374s 499ms/step - loss: 2.2305 - acc: 0.4838
+INFO:root:[      test] Accuracy: 0.4440, Prec: 0.3854, Rec: 0.2401, F1: 0.2577
+INFO:root:[validation] Accuracy: 0.4432, Prec: 0.3865, Rec: 0.2361, F1: 0.2566
+Epoch 19/40
+748/748 [==============================] - 374s 500ms/step - loss: 2.2023 - acc: 0.4856
+INFO:root:[      test] Accuracy: 0.4443, Prec: 0.3845, Rec: 0.2396, F1: 0.2601
+INFO:root:[validation] Accuracy: 0.4428, Prec: 0.3832, Rec: 0.2355, F1: 0.2579
+Epoch 20/40
+748/748 [==============================] - 374s 500ms/step - loss: 2.1776 - acc: 0.4885
+INFO:root:[      test] Accuracy: 0.4465, Prec: 0.3905, Rec: 0.2386, F1: 0.2610
+INFO:root:[validation] Accuracy: 0.4456, Prec: 0.3991, Rec: 0.2356, F1: 0.2614
+Epoch 21/40
+748/748 [==============================] - 372s 498ms/step - loss: 2.1537 - acc: 0.4922
+INFO:root:[      test] Accuracy: 0.4435, Prec: 0.3704, Rec: 0.2438, F1: 0.2634
+INFO:root:[validation] Accuracy: 0.4433, Prec: 0.3760, Rec: 0.2413, F1: 0.2640
+Epoch 22/40
+748/748 [==============================] - 374s 500ms/step - loss: 2.1333 - acc: 0.4941
+INFO:root:[      test] Accuracy: 0.4427, Prec: 0.3609, Rec: 0.2468, F1: 0.2642
+INFO:root:[validation] Accuracy: 0.4424, Prec: 0.3641, Rec: 0.2440, F1: 0.2643
+Epoch 23/40
+748/748 [==============================] - 374s 500ms/step - loss: 2.1118 - acc: 0.4960
+INFO:root:[      test] Accuracy: 0.4415, Prec: 0.3661, Rec: 0.2468, F1: 0.2655
+INFO:root:[validation] Accuracy: 0.4395, Prec: 0.3658, Rec: 0.2418, F1: 0.2623
+Epoch 24/40
+748/748 [==============================] - 374s 500ms/step - loss: 2.0939 - acc: 0.5001
+INFO:root:[      test] Accuracy: 0.4439, Prec: 0.3724, Rec: 0.2457, F1: 0.2657
+INFO:root:[validation] Accuracy: 0.4433, Prec: 0.3748, Rec: 0.2420, F1: 0.2644
+Epoch 25/40
+748/748 [==============================] - 374s 500ms/step - loss: 2.0740 - acc: 0.5023
+INFO:root:[      test] Accuracy: 0.4446, Prec: 0.3735, Rec: 0.2451, F1: 0.2666
+INFO:root:[validation] Accuracy: 0.4427, Prec: 0.3703, Rec: 0.2412, F1: 0.2646
+Epoch 26/40
+748/748 [==============================] - 375s 501ms/step - loss: 2.0574 - acc: 0.5056
+INFO:root:[      test] Accuracy: 0.4439, Prec: 0.3625, Rec: 0.2496, F1: 0.2690
+INFO:root:[validation] Accuracy: 0.4413, Prec: 0.3615, Rec: 0.2448, F1: 0.2664
+Epoch 27/40
+748/748 [==============================] - 375s 501ms/step - loss: 2.0399 - acc: 0.5068
+INFO:root:[      test] Accuracy: 0.4429, Prec: 0.3656, Rec: 0.2513, F1: 0.2694
+INFO:root:[validation] Accuracy: 0.4414, Prec: 0.3630, Rec: 0.2464, F1: 0.2664
+Epoch 28/40
+748/748 [==============================] - 374s 500ms/step - loss: 2.0273 - acc: 0.5103
+INFO:root:[      test] Accuracy: 0.4393, Prec: 0.3473, Rec: 0.2565, F1: 0.2720
+INFO:root:[validation] Accuracy: 0.4383, Prec: 0.3468, Rec: 0.2524, F1: 0.2701
+Epoch 29/40
+748/748 [==============================] - 374s 499ms/step - loss: 2.0133 - acc: 0.5116
+INFO:root:[      test] Accuracy: 0.4383, Prec: 0.3485, Rec: 0.2545, F1: 0.2701
+INFO:root:[validation] Accuracy: 0.4380, Prec: 0.3462, Rec: 0.2507, F1: 0.2681
+Epoch 30/40
+748/748 [==============================] - 373s 499ms/step - loss: 1.9976 - acc: 0.5145
+INFO:root:[      test] Accuracy: 0.4409, Prec: 0.3524, Rec: 0.2526, F1: 0.2706
+INFO:root:[validation] Accuracy: 0.4404, Prec: 0.3555, Rec: 0.2498, F1: 0.2706
+Epoch 31/40
+748/748 [==============================] - 374s 501ms/step - loss: 1.9851 - acc: 0.5164
+INFO:root:[      test] Accuracy: 0.4411, Prec: 0.3572, Rec: 0.2510, F1: 0.2722
+INFO:root:[validation] Accuracy: 0.4411, Prec: 0.3577, Rec: 0.2482, F1: 0.2713
+Epoch 32/40
+748/748 [==============================] - 374s 500ms/step - loss: 1.9697 - acc: 0.5195
+INFO:root:[      test] Accuracy: 0.4381, Prec: 0.3406, Rec: 0.2586, F1: 0.2733
+INFO:root:[validation] Accuracy: 0.4385, Prec: 0.3445, Rec: 0.2552, F1: 0.2731
+Epoch 33/40
+748/748 [==============================] - 375s 501ms/step - loss: 1.9576 - acc: 0.5228
+INFO:root:[      test] Accuracy: 0.4402, Prec: 0.3458, Rec: 0.2564, F1: 0.2729
+INFO:root:[validation] Accuracy: 0.4398, Prec: 0.3449, Rec: 0.2515, F1: 0.2704
+Epoch 34/40
+748/748 [==============================] - 372s 498ms/step - loss: 1.9458 - acc: 0.5251
+INFO:root:[      test] Accuracy: 0.4375, Prec: 0.3357, Rec: 0.2603, F1: 0.2737
+INFO:root:[validation] Accuracy: 0.4371, Prec: 0.3375, Rec: 0.2556, F1: 0.2718
+INFO:root:Epoch 34: early stopping
+INFO:root:Saving model to json
+INFO:root:Saving model weights
+INFO:root:Evaluating
+INFO:root:[      test] Accuracy: 0.4375, Prec: 0.3357, Rec: 0.2603, F1: 0.2737
