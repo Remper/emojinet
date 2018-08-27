@@ -1,6 +1,6 @@
 from math import ceil
 
-from keras_preprocessing.text import text_to_word_sequence
+import re
 from os import path
 
 import argparse
@@ -12,7 +12,7 @@ from scipy import sparse
 
 from models import get_model
 from preprocessing.fasttext import FastText
-from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader
+from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader, EvalitaPreprocDatasetReader
 from utils import get_model_memory_usage
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 
@@ -28,6 +28,7 @@ class FileProvider:
         self.semeval_train = path.join(self.input_dir, 'semeval_train')
         self.semeval_test = path.join(self.input_dir, 'semeval_test')
         self.evalita = path.join(self.input_dir, 'evalita_train.json')
+        self.evalita_resolved_train = path.join(self.input_dir, 'evalita_resolved_train.json')
         self.evalita_train = path.join(self.input_dir, 'evalita_split_train.json')
         self.evalita_test = path.join(self.input_dir, 'evalita_split_test.json')
 
@@ -48,6 +49,8 @@ if __name__ == '__main__':
                         help='The maximum epoch number')
     parser.add_argument('--max-seq-length', type=int, default=40,
                         help='Maximum sequence length')
+    parser.add_argument('--max-char-length', type=int, default=5000,
+                        help='Maximum character length')
 
     args = parser.parse_args()
     files = FileProvider(args.workdir)
@@ -59,11 +62,7 @@ if __name__ == '__main__':
         raw_train = SemEvalDatasetReader(files.semeval_train)
         raw_test = SemEvalDatasetReader(files.semeval_test)
     else:
-        if not path.exists(files.evalita_train):
-            raw_train, raw_test = EvalitaDatasetReader(files.evalita).split()
-        else:
-            raw_train = EvalitaDatasetReader(files.evalita_train)
-            raw_test = EvalitaDatasetReader(files.evalita_test)
+        raw_train, raw_test = EvalitaPreprocDatasetReader(files.evalita_resolved_train).split()
     raw_train, raw_val = raw_train.split(test_size=0.1)
 
     """##### Initializing embeddings"""
@@ -74,8 +73,12 @@ if __name__ == '__main__':
     embedding_matrix = fasttext.embeddings
     logging.info("Restored %d embeddings" % (fasttext.num_original_vectors))
 
+    def text_to_word_sequence(text):
+        return re.compile("\s+").split(text.lower().strip())
+
     max_seq_length = 0
     max_char_length = 0
+    max_perm_char_length = 0
     for text in raw_train.X:
         words = text_to_word_sequence(text)
         ngrams = list()
@@ -85,9 +88,11 @@ if __name__ == '__main__':
             max_seq_length = len(words)
         if len(ngrams) > max_char_length:
             max_char_length = len(ngrams)
+        if len(ngrams) > max_perm_char_length and len(words) <= args.max_seq_length:
+            max_perm_char_length = len(ngrams)
     logging.info("Max lengths in training set. seq: %d char: %d" % (max_seq_length, max_char_length))
     max_seq_length = min(max_seq_length, args.max_seq_length)
-    #max_char_length = min(max_char_length, 3500)
+    max_char_length = min(max_char_length, args.max_char_length)
 
     def convert_input(raw_input):
         output = []
