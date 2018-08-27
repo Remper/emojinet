@@ -9,3 +9,31 @@ python src/train.py \
         --max-epoch 40 \
         --semeval
 ```
+
+### Data analysis
+
+```
+python3 data_analysis/data_analysis.py 
+        --workdir evalita_data
+```
+
+This script will output a file containing total number, unique number and distributions of:
+* tokens
+* hashtags
+* mentions
+* URLS
+* labels
+
+### VDCNN
+
+```
+python3 train_vdcnn.py 
+        --evalita
+        --workdir evalita_data
+        --max-seq-length 1024
+        --pool-type k_max
+        --depth 29
+        --shortcut
+        --bias
+
+```

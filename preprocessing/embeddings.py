@@ -9,13 +9,15 @@ def open_custom(file: str):
     return open(file, 'r')
 
 
-def restore_from_file(file: str, words: set, lower=False) -> (dict, int):
+def restore_from_file(file: str, words: set, lower = False, skip_first_line = True) -> (dict, int):
     dictionary = dict()
     count = 0
     row_size = 0
     timestamp = time.time()
     symbol = None
     with open_custom(file) as reader:
+        if skip_first_line:
+            next(reader)
         for line in reader:
             if symbol is None:
                 for test_symbol in ['\t', ' ']:

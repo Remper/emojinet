@@ -1,6 +1,6 @@
 from models.ensemble_cnn_subword import ensemble_cnn_subword
 from models.base_cnn import base_cnn
-
+from models.vdcnn import vdcnn
 
 class ModelDefinition:
     def __init__(self, func, params):
@@ -14,7 +14,8 @@ class ModelDefinition:
 def get_model(model: str) -> ModelDefinition:
     models = {
         "base_cnn": ModelDefinition(base_cnn, ["vocabulary_size", "embedding_size", "max_seq_length", "embedding_matrix", "y_dictionary"]),
-        "ensemble_cnn_subword": ModelDefinition(ensemble_cnn_subword, ["vocabulary_size", "embedding_size", "max_char_length", "max_seq_length", "embedding_matrix", "y_dictionary"])
+        "ensemble_cnn_subword": ModelDefinition(ensemble_cnn_subword, ["vocabulary_size", "embedding_size", "max_char_length", "max_seq_length", "embedding_matrix", "y_dictionary"]),
+        "vdcnn": ModelDefinition(vdcnn, ["num_classes", "depth", "sequence_length", "shortcut", "pool_type", "sorted", "use_bias"])
     }
 
     return models[model]
