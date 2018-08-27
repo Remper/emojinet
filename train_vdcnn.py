@@ -125,7 +125,7 @@ if __name__ == "__main__":
         "train": EvalCallback("train", X_train, Y_train, period=3),
         "val": EvalCallback("validation", X_val, Y_val)
     }
-    callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"], patience = 2)
+    callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"], patience=3)
     model.fit(X_train,
               Y_train_one_hot,
               class_weight=Y_class_weights,

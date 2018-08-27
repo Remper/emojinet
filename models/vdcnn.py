@@ -154,7 +154,7 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
     # Create model.
     model = Model(inputs=inputs, outputs=out, name='VDCNN')
     #optimizer = SGD(lr=0.01, momentum=0.9)
-    optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.001)
+    optimizer = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, decay=0.0001)
     model.compile(loss='categorical_crossentropy',
                   optimizer=optimizer,
                   metrics=['accuracy'])
