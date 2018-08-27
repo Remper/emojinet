@@ -3,7 +3,7 @@ from keras.layers import Dense, Dropout, Embedding, Conv1D, MaxPooling1D, Flatte
     GlobalAveragePooling1D, Dot, Lambda
 import numpy as np
 import keras.backend as K
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 
 
 def ensemble_cnn_subword(vocabulary_size: int, embedding_size: int, max_char_length: int, max_seq_length: int, embedding_matrix: np.array, y_dictionary: dict) -> Model:
@@ -43,7 +43,7 @@ def ensemble_cnn_subword(vocabulary_size: int, embedding_size: int, max_char_len
     model = Dense(len(y_dictionary), activation='softmax')(model)
     model = Model([input, mask], model)
 
-    optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.00005)
+    optimizer = RMSprop(lr=0.001, decay=0.00005)
     model.compile(loss='categorical_crossentropy',
                   optimizer=optimizer,
                   metrics=['accuracy'])

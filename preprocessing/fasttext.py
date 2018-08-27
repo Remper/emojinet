@@ -90,7 +90,7 @@ class FastText:
     def transform_input(self, words: list, max_words: int, max_chars=280) -> (np.array, np.array):
         result = np.zeros([max_chars], dtype=self.dtype)
         res_index = 0
-        mask = np.zeros([max_words, max_chars], dtype=self.dtype)
+        mask = np.zeros([max_words, max_chars], dtype=np.float16)
         for i, word in enumerate(words):
             if i >= max_words:
                 break
