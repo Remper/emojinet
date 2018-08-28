@@ -156,7 +156,7 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
     #optimizer = SGD(lr=0.01, momentum=0.9)
     #optimizer = SGD(lr=0.0001, momentum=0.9)
     #optimizer = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, decay=0.0001)
-    optimizer = Adam(lr=0.00035, beta_1=0.9, beta_2=0.999, decay=0.00035)
+    optimizer = Adam(lr=0.0003, beta_1=0.9, beta_2=0.999, decay=0.0003)
     model.compile(loss='categorical_crossentropy',
                   optimizer=optimizer,
                   metrics=['accuracy'])
