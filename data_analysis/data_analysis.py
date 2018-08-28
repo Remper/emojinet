@@ -51,11 +51,11 @@ if __name__ == '__main__':
     files = FileProvider(args.workdir)
 
     logging.info("Loading txt_2_emoji.json file")
-    with open("{}/input/{}".format(args.workdir, "txt_2_emoji.json"), 'r') as txt_2_emoji_file:
+    with open("{}/{}".format("data_analysis", "txt_2_emoji.json"), 'r') as txt_2_emoji_file:
         txt_2_emoji = json.load(txt_2_emoji_file)
 
     logging.info("Loading idx_2_emoji.json file")
-    with open("{}/input/{}".format(args.workdir, "idx_2_emoji.json"), 'r') as idx_2_emoji_file:
+    with open("{}/{}".format("data_analysis", "idx_2_emoji.json"), 'r') as idx_2_emoji_file:
         idx_2_emoji = json.load(idx_2_emoji_file)
 
     logging.info("Starting data analysis with parameters: {0}".format(vars(args)))
