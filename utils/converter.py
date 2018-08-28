@@ -19,7 +19,6 @@ class Converter:
             else:
                 # unknown character set to be 0
                 data[i] = 0
-            print("{} = {}".format(text[i], str(data[i])))
         return data
 
     def texts_to_sequences(self, dataset):
