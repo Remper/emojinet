@@ -24,6 +24,8 @@ if __name__ == '__main__':
                         help='The directory with the precomputed embeddings')
     parser.add_argument('--workdir', required=True,
                         help='Work path')
+    parser.add_argument('--base-model', required=True,
+                        help='Model to be trained', choices=["base_cnn", "base_lstm"])
     parser.add_argument('--evalita', default=False, action='store_true', help='Train and test on EVALITA2018 dataset')
     parser.add_argument('--semeval', default=False, action='store_true', help='Train and test on SemEval2018 dataset')
     parser.add_argument('--batch-size', type=int, default=256,
@@ -138,7 +140,7 @@ if __name__ == '__main__':
         "embedding_matrix": embedding_matrix,
         "y_dictionary": Y_dictionary
     }
-    model = get_model("base_cnn").apply(params)
+    model = get_model(args.base_model).apply(params)
 
     """##### Load model"""
 
