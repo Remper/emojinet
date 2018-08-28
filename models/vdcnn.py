@@ -1,5 +1,5 @@
 from keras.models import Model
-from keras.layers import Input, Embedding, Conv1D, BatchNormalization, Activation, Add, MaxPooling1D, Dense, Flatten
+from keras.layers import Input, Embedding, Conv1D, BatchNormalization, Activation, Add, MaxPooling1D, Dense, Flatten, Dropout
 from keras.engine.topology import get_source_inputs
 from keras.engine import Layer, InputSpec
 from keras.optimizers import SGD, Adam
@@ -111,7 +111,8 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
     inputs = Input(shape=(sequence_length, ), name='inputs')
     #embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim)(inputs)
     embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim, weights=[embedding_matrix], trainable=True)(inputs)
-    out = Conv1D(filters=64, kernel_size=3, strides=1, padding='same', name='temp_conv')(embedded_chars)
+    droput_embeddings = Dropout(0.4)(embedded_chars)
+    out = Conv1D(filters=64, kernel_size=3, strides=1, padding='same', name='temp_conv')(droput_embeddings)
 
     # Convolutional Block 64
     for _ in range(num_conv_blocks[0] - 1):
@@ -143,7 +144,9 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
 
     # Dense Layers
     out = Dense(2048, activation='relu')(out)
+    out = Dropout(0.4)(out)
     out = Dense(2048, activation='relu')(out)
+    out = Dropout(0.4)(out)
     out = Dense(num_classes, activation='softmax')(out)
 
     if input_tensor is not None:
@@ -154,8 +157,9 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
     # Create model.
     model = Model(inputs=inputs, outputs=out, name='VDCNN')
     #optimizer = SGD(lr=0.01, momentum=0.9)
-    optimizer = SGD(lr=0.0001, momentum=0.9)
+    #optimizer = SGD(lr=0.0001, momentum=0.9)
     #optimizer = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, decay=0.0001)
+    optimizer = Adam(lr=0.00035, beta_1=0.9, beta_2=0.999, decay=0.00035)
     model.compile(loss='categorical_crossentropy',
                   optimizer=optimizer,
                   metrics=['accuracy'])
