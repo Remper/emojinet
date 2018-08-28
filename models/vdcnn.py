@@ -111,7 +111,7 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
     inputs = Input(shape=(sequence_length, ), name='inputs')
     #embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim)(inputs)
     embedded_chars = Embedding(input_dim=sequence_length, output_dim=embedding_dim, weights=[embedding_matrix], trainable=True)(inputs)
-    droput_embeddings = Dropout(0.4)(embedded_chars)
+    droput_embeddings = Dropout(0.2)(embedded_chars)
     out = Conv1D(filters=64, kernel_size=3, strides=1, padding='same', name='temp_conv')(droput_embeddings)
 
     # Convolutional Block 64
@@ -144,9 +144,9 @@ def vdcnn(num_classes, depth=9, sequence_length=1024, shortcut=False, pool_type=
 
     # Dense Layers
     out = Dense(2048, activation='relu')(out)
-    out = Dropout(0.4)(out)
+    out = Dropout(0.2)(out)
     out = Dense(2048, activation='relu')(out)
-    out = Dropout(0.4)(out)
+    out = Dropout(0.2)(out)
     out = Dense(num_classes, activation='softmax')(out)
 
     if input_tensor is not None:
