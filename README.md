@@ -47,4 +47,4 @@ python3 train_vdcnn.py
 |VDCNN 9 shortcut     |0.3673     |0.2943     |0.1772     |0.1926     |
 |BASECNN fasttext     |0.4435     |0.4413     |0.2354     |0.2560     |
 |BASECNN provided     |0.4230     |0.4724     |0.1905     |0.2083     |
-|BASECNN 300d         |0.0000     |0.0000     |0.0000     |0.0000     |
+|BASECNN 300d         |0.4351     |0.3489     |0.2464     |0.2673     |
