@@ -1,4 +1,4 @@
-from os import path
+from os import path, environ
 
 import argparse
 from keras.preprocessing import sequence
@@ -24,6 +24,8 @@ if __name__ == '__main__':
                         help='The directory with the precomputed embeddings')
     parser.add_argument('--workdir', required=True,
                         help='Work path')
+    parser.add_argument("--gpu", type=int, default=0,
+                        help="GPU ID to be used [0, 1, -1]")
     parser.add_argument('--base-model', required=True,
                         help='Model to be trained', choices=["base_cnn", "base_lstm"])
     parser.add_argument('--evalita', default=False, action='store_true', help='Train and test on EVALITA2018 dataset')
@@ -43,6 +45,9 @@ if __name__ == '__main__':
     parser.add_argument('--embeddings-skip-first-line', default=False, action='store_true', help='Skip first line of the embeddings')
 
     args = parser.parse_args()
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.gpu)
+
     files = FileProvider(args.workdir)
     logging.info("Starting training with parameters: {0}".format(vars(args)))
 
