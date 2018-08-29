@@ -1,4 +1,4 @@
-from os import path
+import os
 
 import argparse
 from keras.utils import to_categorical
@@ -6,13 +6,12 @@ from keras.utils import to_categorical
 import numpy as np
 import logging
 
+from os import path
 from models import get_model
 from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from utils.fileprovider import FileProvider
 from utils.converter import Converter
-
-import os
 
 logging.getLogger().setLevel(logging.INFO)
 
