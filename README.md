@@ -57,7 +57,7 @@ python3 train_vdcnn.py
 
 ### Experiment log
 
-| Model                      |Split    |Embeddings     | Accuracy  | Precision | Recall    | F1        |
-|:---------------------------|:------- |:------------- |:--------- |:----------|:----------|:----------|
-|BASE LSTM User              |42 (def) |ft-it-our-100d |0.4863     |0.4335     |0.3193     |0.3548     |
-|BASE LSTM User              |42 (def) |ft-it-our-100d |0.4885     |0.4362     |0.3220     |0.3571     |
+| Model                      |Split    |Embeddings     | Accuracy  | Precision | Recall    | F1        | Remarks           |
+|:---------------------------|:------- |:------------- |:--------- |:--------- |:--------- |:--------- |:----------------- |
+|BASE LSTM User              |42 (def) |ft-it-our-100d |0.4863     |0.4335     |0.3193     |0.3548     | dict size: 100000 |
+|BASE LSTM User              |42 (def) |ft-it-our-100d |0.4885     |0.4362     |0.3220     |0.3571     | dict size: 100000 |
