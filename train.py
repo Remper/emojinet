@@ -58,21 +58,15 @@ if __name__ == '__main__':
         raw_train = SemEvalDatasetReader(files.semeval_train)
         raw_test = SemEvalDatasetReader(files.semeval_test)
     else:
-        Reader = EvalitaDatasetReader
-        if args.use_history:
-            Reader = EvalitaHistoryReader
         if not path.exists(files.evalita_train):
-            raw_train, raw_test = Reader(files.evalita).split()
+            raw_train, raw_test = EvalitaHistoryReader(files.evalita).split()
         else:
-            raw_train = Reader(files.evalita_train)
-            raw_test = Reader(files.evalita_test)
+            raw_train = EvalitaHistoryReader(files.evalita_train)
+            raw_test = EvalitaHistoryReader(files.evalita_test)
     raw_train, raw_val = raw_train.split(test_size=0.1)
 
     tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
-    if args.use_history:
-        tokenizer.fit_on_texts([text for text, uid in raw_train.X])
-    else:
-        tokenizer.fit_on_texts(raw_train.X)
+    tokenizer.fit_on_texts([text for text, uid in raw_train.X])
     vocabulary_size = min(len(tokenizer.word_index), args.max_dict)
     logging.info("Vocabulary size: %d, Total words: %d" % (vocabulary_size, len(tokenizer.word_counts)))
 
@@ -88,7 +82,7 @@ if __name__ == '__main__':
 
     def process_input(raw_input, user_data=None):
         if user_data is None:
-            return [tokenizer.texts_to_sequences(raw_input.X)], raw_input.Y
+            return [tokenizer.texts_to_sequences([text for text, uid in raw_train.X])], raw_input.Y
 
         texts = []
         history = []
@@ -101,7 +95,7 @@ if __name__ == '__main__':
                 distr = np.zeros([len(raw_train.Y_dictionary)], dtype=np.float16)
             history.append(distr)
 
-        return [tokenizer.texts_to_sequences(texts), history], raw_input.Y
+        return [tokenizer.texts_to_sequences(texts), np.array(history)], raw_input.Y
 
     X_train, Y_train = process_input(raw_train, user_data)
     X_val, Y_val = process_input(raw_val, user_data)
@@ -179,7 +173,7 @@ if __name__ == '__main__':
     model_name = args.base_model
     if args.use_history:
         model_name += "_user"
-    model = get_model(args.base_model).apply(params)
+    model = get_model(model_name).apply(params)
 
     """##### Load model"""
 
