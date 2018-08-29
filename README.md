@@ -58,5 +58,13 @@ python3 train_vdcnn.py
 |BASELSTM                    |ft-it-300d     |0.4027     |0.3077     |0.2483     |0.2650     |
 |BASELSTM                    |ft-it-300d     |0.3974     |0.3102     |0.2616     |0.2749     |
 |BASELSTM                    |ft-it-300d     |0.4157     |0.3321     |0.2502     |0.2721     |
-|Most frequent user history  |—              |0.4396     |0.4076     |**0.2774** |**0.3133** |
+|Most frequent user history  |—              |0.4396     |0.4076     |0.2774     |0.3133     |
+|BASE LSTM User              |ft-it-our-100d |**0.4874** |**0.4348** |**0.3207** |**0.3560** |
 
+### Experiment log
+
+| Model                      |Split    |Embeddings     | Accuracy  | Precision | Recall    | F1        | Remarks           |
+|:---------------------------|:------- |:------------- |:--------- |:--------- |:--------- |:--------- |:----------------- |
+|BASE LSTM User              |42 (def) |ft-it-our-100d |0.4863     |0.4335     |0.3193     |0.3548     | dict size: 100000 |
+|BASE LSTM User              |42 (def) |ft-it-our-100d |0.4885     |0.4362     |0.3220     |0.3571     | dict size: 100000 |
+>>>>>>> 92d77c68bfa353d5316179045da50efaa8d17fc4
