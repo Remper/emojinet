@@ -40,13 +40,14 @@ python3 train_vdcnn.py
 
 ### Results
 
-| Model                      | Accuracy  | Precision | Recall    | F1        |
-|:---------------------------|:--------- |:----------|:----------|:----------|
-|Ensemble CNN subword        |0.4375     |0.3357     |0.2603     |0.2737     |
-|VDCNN 9                     |0.3431     |0.2343     |0.1750     |0.1824     |
-|VDCNN 9 shortcut            |0.3673     |0.2943     |0.1772     |0.1926     |
-|VDCNN 9 shortcut dropout    |0.3656     |0.2997     |0.1428     |0.1399     |
-|BASECNN fasttext            |0.4435     |0.4413     |0.2354     |0.2560     |
-|BASECNN provided            |0.4230     |0.4724     |0.1905     |0.2083     |
-|BASECNN 300d                |0.4351     |0.3489     |0.2464     |0.2673     |
-|BASELSTM fasttext           |0.4428     |0.3586     |**0.2638** |**0.2831** |
+| Model                      |Embeddings     | Accuracy  | Precision | Recall    | F1        |
+|:---------------------------|:------------- |:--------- |:----------|:----------|:----------|
+|Ensemble CNN subword        |ft-it-our-100d |0.4375     |0.3357     |0.2603     |0.2737     |
+|VDCNN 9                     |—              |0.3431     |0.2343     |0.1750     |0.1824     |
+|VDCNN 9 shortcut            |—              |0.3673     |0.2943     |0.1772     |0.1926     |
+|VDCNN 9 shortcut dropout    |—              |0.3656     |0.2997     |0.1428     |0.1399     |
+|BASECNN                     |ft-it-our-100d |0.4435     |0.4413     |0.2354     |0.2560     |
+|BASECNN                     |provided       |0.4230     |0.4724     |0.1905     |0.2083     |
+|BASECNN                     |ft-it-300d     |0.4351     |0.3489     |0.2464     |0.2673     |
+|BASELSTM                    |ft-it-our-100d |0.4428     |0.3586     |0.2638     |0.2831     |
+|Most frequent user history  |—              |0.4396     |0.4076     |**0.2774** |**0.3133** |

@@ -24,7 +24,7 @@ def ensemble_cnn_subword(vocabulary_size: int, embedding_size: int, max_char_len
 
     # Convolutions
     models = []
-    for i in range(3, 5):
+    for i in range(3, 7):
         model = Dropout(0.4)(embedding)
         model = Conv1D(filters=512, kernel_size=i, activation='relu', padding="same",
                        kernel_regularizer=regularizers.l2(0.00001))(model)

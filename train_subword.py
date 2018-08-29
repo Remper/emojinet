@@ -1,6 +1,7 @@
 from math import ceil
 
 import re
+from keras_preprocessing.text import text_to_word_sequence
 from os import path
 
 import argparse
@@ -62,7 +63,7 @@ if __name__ == '__main__':
         raw_train = SemEvalDatasetReader(files.semeval_train)
         raw_test = SemEvalDatasetReader(files.semeval_test)
     else:
-        raw_train, raw_test = EvalitaPreprocDatasetReader(files.evalita_resolved_train).split()
+        raw_train, raw_test = EvalitaDatasetReader(files.evalita).split()
     raw_train, raw_val = raw_train.split(test_size=0.1)
 
     """##### Initializing embeddings"""
@@ -73,8 +74,8 @@ if __name__ == '__main__':
     embedding_matrix = fasttext.embeddings
     logging.info("Restored %d embeddings" % (fasttext.num_original_vectors))
 
-    def text_to_word_sequence(text):
-        return re.compile("\s+").split(text.lower().strip())
+    #def text_to_word_sequence(text):
+    #    return re.compile("\s+").split(text.lower().strip())
 
     max_seq_length = 0
     max_char_length = 0
@@ -111,7 +112,8 @@ if __name__ == '__main__':
                 print("  Converting input %d / %d" % (counter, len(raw_input.X)))
         output = np.stack(output)
         output_mask = np.stack(output_mask)
-        print("Input shapes: %s %s" % (str(output.shape), str(output_mask.shape)))
+        print("Input shapes: %s %s (type: %s, size: %.1fGB)" %
+              (str(output.shape), str(output_mask.shape), str(output_mask.dtype), float(output_mask.nbytes) / (1024 ** 3)))
         return output, output_mask, raw_input.Y
 
     X_train, X_train_mask, Y_train = convert_input(raw_train)
@@ -143,7 +145,7 @@ if __name__ == '__main__':
         "embedding_matrix": embedding_matrix,
         "y_dictionary": Y_dictionary
     }
-    model = get_model("ensemble_cnn_subword").apply(params)
+    model = get_model("base_lstm_subword").apply(params)
 
     """##### Load model"""
 
