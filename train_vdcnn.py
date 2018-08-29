@@ -1,5 +1,4 @@
-from os import path, environ
-
+import os
 import argparse
 from keras.utils import to_categorical
 
