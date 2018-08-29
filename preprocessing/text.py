@@ -93,13 +93,14 @@ class Tokenizer(object):
         wcounts = list(self.word_counts.items())
         wcounts.sort(key=lambda x: x[1], reverse=True)
         sorted_voc = [wc[0] for wc in wcounts]
-        # note that index 0 is reserved, never assigned to an existing word
-        self.word_index = dict(list(zip(sorted_voc, list(range(0, len(sorted_voc))))))
+        # note that indices 0 and 1 are reserved, never assigned to an existing word
+        self.word_index = dict(list(zip(sorted_voc, list(range(2, len(sorted_voc)+2)))))
 
+        # index 1 is reserved for the oov token
         if self.oov_token is not None:
             i = self.word_index.get(self.oov_token)
             if i is None:
-                self.word_index[self.oov_token] = len(self.word_index)
+                self.word_index[self.oov_token] = 1
 
         for w, c in list(self.word_docs.items()):
             self.index_docs[self.word_index[w]] = c

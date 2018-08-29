@@ -9,7 +9,7 @@ import logging
 
 from models import get_model
 from preprocessing.embeddings import restore_from_file
-from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader
+from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader, EvalitaHistoryReader
 from preprocessing.text import Tokenizer
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from utils.fileprovider import FileProvider
@@ -40,6 +40,7 @@ if __name__ == '__main__':
                         help='The maximum epoch number')
     parser.add_argument('--max-seq-length', type=int, default=40,
                         help='Maximum sequence length')
+    parser.add_argument('--use-history', default=False, action='store_true', help='Use user history to assist prediction')
     parser.add_argument('--embeddings-skip-first-line', default=False, action='store_true', help='Skip first line of the embeddings')
 
     args = parser.parse_args()
@@ -52,24 +53,54 @@ if __name__ == '__main__':
         raw_train = SemEvalDatasetReader(files.semeval_train)
         raw_test = SemEvalDatasetReader(files.semeval_test)
     else:
+        Reader = EvalitaDatasetReader
+        if args.use_history:
+            Reader = EvalitaHistoryReader
         if not path.exists(files.evalita_train):
-            raw_train, raw_test = EvalitaDatasetReader(files.evalita).split()
+            raw_train, raw_test = Reader(files.evalita).split()
         else:
-            raw_train = EvalitaDatasetReader(files.evalita_train)
-            raw_test = EvalitaDatasetReader(files.evalita_test)
+            raw_train = Reader(files.evalita_train)
+            raw_test = Reader(files.evalita_test)
     raw_train, raw_val = raw_train.split(test_size=0.1)
 
     tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
-    tokenizer.fit_on_texts(raw_train.X)
+    if args.use_history:
+        tokenizer.fit_on_texts([text for text, uid in raw_train.X])
+    else:
+        tokenizer.fit_on_texts(raw_train.X)
     vocabulary_size = min(len(tokenizer.word_index), args.max_dict)
     logging.info("Vocabulary size: %d, Total words: %d" % (vocabulary_size, len(tokenizer.word_counts)))
 
-    X_train = tokenizer.texts_to_sequences(raw_train.X)
-    Y_train = raw_train.Y
-    X_val = tokenizer.texts_to_sequences(raw_val.X)
-    Y_val = raw_val.Y
-    X_test = tokenizer.texts_to_sequences(raw_test.X)
-    Y_test = raw_test.Y
+    # Populating user history
+    user_data = None
+    if args.use_history:
+        user_data = {}
+        for i in range(len(raw_train.Y)):
+            uid = raw_train.X[i][1]
+            if uid not in user_data:
+                user_data[uid] = np.zeros([len(raw_train.Y_dictionary)], dtype=np.float16)
+            user_data[uid][raw_train.Y[i]] += 1
+
+    def process_input(raw_input, user_data=None):
+        if user_data is None:
+            return [tokenizer.texts_to_sequences(raw_input.X)], raw_input.Y
+
+        texts = []
+        history = []
+
+        for text, uid in raw_input.X:
+            texts.append(text)
+            if uid in user_data:
+                distr = user_data[uid]
+            else:
+                distr = np.zeros([len(raw_train.Y_dictionary)], dtype=np.float16)
+            history.append(distr)
+
+        return [tokenizer.texts_to_sequences(texts), history], raw_input.Y
+
+    X_train, Y_train = process_input(raw_train, user_data)
+    X_val, Y_val = process_input(raw_val, user_data)
+    X_test, Y_test = process_input(raw_test, user_data)
     Y_dictionary = raw_train.Y_dictionary
     Y_class_weights = len(Y_train) / np.power(np.bincount(Y_train), 1.1)
     Y_class_weights *= 1.0 / np.min(Y_class_weights)
@@ -82,14 +113,14 @@ if __name__ == '__main__':
     logging.info("Padding train and test")
 
     max_seq_length = 0
-    for seq in X_train:
+    for seq in X_train[0]:
         if len(seq) > max_seq_length:
             max_seq_length = len(seq)
     logging.info("Max sequence length in training set: %d" % max_seq_length)
     max_seq_length = min(max_seq_length, args.max_seq_length)
-    X_train = sequence.pad_sequences(X_train, maxlen=max_seq_length)
-    X_val = sequence.pad_sequences(X_val, maxlen=max_seq_length)
-    X_test = sequence.pad_sequences(X_test, maxlen=max_seq_length)
+    X_train[0] = sequence.pad_sequences(X_train[0], maxlen=max_seq_length)
+    X_val[0] = sequence.pad_sequences(X_val[0], maxlen=max_seq_length)
+    X_test[0] = sequence.pad_sequences(X_test[0], maxlen=max_seq_length)
 
     """##### Initializing embeddings"""
     logging.info("Initializing embeddings")
@@ -140,6 +171,9 @@ if __name__ == '__main__':
         "embedding_matrix": embedding_matrix,
         "y_dictionary": Y_dictionary
     }
+    model_name = args.base_model
+    if args.use_history:
+        model_name += "_user"
     model = get_model(args.base_model).apply(params)
 
     """##### Load model"""

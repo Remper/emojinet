@@ -3,6 +3,34 @@ import logging
 import numpy as np
 from sklearn.model_selection import train_test_split
 
+EMOJIS = {
+    'red_heart': ['❤', '♥️', '♥'],
+    'face_with_tears_of_joy': '😂',
+    'smiling_face_with_heart_eyes': '😍',
+    'winking_face': '😉',
+    'smiling_face_with_smiling_eyes': '😊',
+    'beaming_face_with_smiling_eyes': '😁',
+    'grinning_face': ['😀', '😃'],
+    'face_blowing_a_kiss': '😘',
+    'smiling_face_with_sunglasses': '😎',
+    'thumbs_up': '👍',
+    'rolling_on_the_floor_laughing': '🤣',
+    'thinking_face': '🤔',
+    'blue_heart': '💙',
+    'winking_face_with_tongue': '😜',
+    'face_screaming_in_fear': '😱',
+    'flexed_biceps': '💪',
+    'face_savoring_food': '😋',
+    'grinning_face_with_sweat': '😅',
+    'loudly_crying_face': '😭',
+    'TOP_arrow': '🔝',
+    'two_hearts': '💕',
+    'sun': ['☀️', '☀️', '☀'],
+    'kiss_mark': '💋',
+    'sparkles': '✨',
+    'rose': '🌹'
+}
+
 
 class DatasetReader:
     def __init__(self, X, Y, Y_dictionary):
@@ -85,6 +113,35 @@ class EvalitaDatasetReader(DatasetReader):
         return texts, np.array(labels), dictionary
 
 
+class EvalitaHistoryReader(DatasetReader):
+    def __init__(self, dataset_path: str):
+        super().__init__(*self._load(dataset_path))
+        logging.info("Loaded %d samples with %d classes for dataset %s" % (len(self.Y), len(self.Y_dictionary), dataset_path))
+
+    @staticmethod
+    def _load(path: str) -> (list, list, dict):
+        texts = []
+        labels = []
+        dictionary = {}
+
+        row = 0
+        with open(path, 'r', encoding="utf-8") as reader:
+            for line in reader:
+                line = line.rstrip()
+                sample = json.loads(line)
+                texts.append((sample["text_no_emoji"], sample["uid"]))
+                label = sample["label"]
+                if label not in dictionary:
+                    dictionary[label] = len(dictionary)
+                labels.append(dictionary[label])
+
+                row += 1
+                if row % 10000 == 0:
+                    logging.debug("  Loaded %dk texts" % (len(texts) / 1000))
+
+        return texts, np.array(labels), dictionary
+
+
 class EvalitaPreprocDatasetReader(DatasetReader):
     def __init__(self, dataset_path: str):
         super().__init__(*self._load(dataset_path))
@@ -92,40 +149,13 @@ class EvalitaPreprocDatasetReader(DatasetReader):
 
     @staticmethod
     def _load(path: str) -> (list, list, dict):
-        emojis = {
-            'red_heart': ['❤', '♥️', '♥'],
-            'face_with_tears_of_joy': '😂',
-            'smiling_face_with_heart_eyes': '😍',
-            'winking_face': '😉',
-            'smiling_face_with_smiling_eyes': '😊',
-            'beaming_face_with_smiling_eyes': '😁',
-            'grinning_face': ['😀', '😃'],
-            'face_blowing_a_kiss': '😘',
-            'smiling_face_with_sunglasses': '😎',
-            'thumbs_up': '👍',
-            'rolling_on_the_floor_laughing': '🤣',
-            'thinking_face': '🤔',
-            'blue_heart': '💙',
-            'winking_face_with_tongue': '😜',
-            'face_screaming_in_fear': '😱',
-            'flexed_biceps': '💪',
-            'face_savoring_food': '😋',
-            'grinning_face_with_sweat': '😅',
-            'loudly_crying_face': '😭',
-            'TOP_arrow': '🔝',
-            'two_hearts': '💕',
-            'sun': ['☀️', '☀️', '☀'],
-            'kiss_mark': '💋',
-            'sparkles': '✨',
-            'rose': '🌹'
-        }
         inv_emoji = dict()
-        for param in emojis:
-            if isinstance(emojis[param], list):
-                for emoji in emojis[param]:
+        for param in EMOJIS:
+            if isinstance(EMOJIS[param], list):
+                for emoji in EMOJIS[param]:
                     inv_emoji[emoji] = param
             else:
-                inv_emoji[emojis[param]] = param
+                inv_emoji[EMOJIS[param]] = param
 
         texts = []
         labels = []
