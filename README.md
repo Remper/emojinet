@@ -50,7 +50,13 @@ python3 train_vdcnn.py
 |BASECNN                     |provided       |0.4230     |0.4724     |0.1905     |0.2083     |
 |BASECNN                     |ft-it-300d     |0.4351     |0.3489     |0.2464     |0.2673     |
 |BASELSTM                    |ft-it-our-100d |0.4428     |0.3586     |0.2638     |0.2831     |
+|BASELSTM                    |ft-it-our-100d |0.4458     |0.3779     |0.2494     |0.2743     |
+|BASELSTM                    |ft-it-our-100d |0.4444     |0.3634     |0.2626     |0.2852     |
 |BASELSTM                    |provided       |0.4381     |0.3662     |0.2481     |0.2701     |
+|BASELSTM                    |provided       |0.4409     |0.3847     |0.2303     |0.2492     |
+|BASELSTM                    |provided       |0.4456     |0.3999     |0.2440     |0.2673     |
 |BASELSTM                    |ft-it-300d     |0.4027     |0.3077     |0.2483     |0.2650     |
+|BASELSTM                    |ft-it-300d     |0.3974     |0.3102     |0.2616     |0.2749     |
+|BASELSTM                    |ft-it-300d     |0.4157     |0.3321     |0.2502     |0.2721     |
 |Most frequent user history  |—              |0.4396     |0.4076     |**0.2774** |**0.3133** |
 
