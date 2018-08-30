@@ -9,7 +9,7 @@ import logging
 from os import path
 from models import get_model
 from preprocessing.embeddings import restore_from_file
-from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader, EvalitaHistoryReader
+from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader, read_emoji_dist
 from preprocessing.text import Tokenizer
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from utils.fileprovider import FileProvider
@@ -42,7 +42,7 @@ if __name__ == '__main__':
                         help='The maximum epoch number')
     parser.add_argument('--max-seq-length', type=int, default=40,
                         help='Maximum sequence length')
-    parser.add_argument('--use-history', default=False, action='store_true', help='Use user history to assist prediction')
+    parser.add_argument('--use-history', choices=["train", "userdata"], help='Use user history to assist prediction')
     parser.add_argument('--embeddings-skip-first-line', default=False, action='store_true', help='Skip first line of the embeddings')
 
     args = parser.parse_args()
@@ -59,10 +59,10 @@ if __name__ == '__main__':
         raw_test = SemEvalDatasetReader(files.semeval_test)
     else:
         if not path.exists(files.evalita_train):
-            raw_train, raw_test = EvalitaHistoryReader(files.evalita).split()
+            raw_train, raw_test = EvalitaDatasetReader(files.evalita).split()
         else:
-            raw_train = EvalitaHistoryReader(files.evalita_train)
-            raw_test = EvalitaHistoryReader(files.evalita_test)
+            raw_train = EvalitaDatasetReader(files.evalita_train)
+            raw_test = EvalitaDatasetReader(files.evalita_test)
     raw_train, raw_val = raw_train.split(test_size=0.1)
 
     tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
@@ -73,12 +73,17 @@ if __name__ == '__main__':
     # Populating user history
     user_data = None
     if args.use_history:
-        user_data = {}
-        for i in range(len(raw_train.Y)):
-            uid = raw_train.X[i][1]
-            if uid not in user_data:
-                user_data[uid] = np.zeros([len(raw_train.Y_dictionary)], dtype=np.float16)
-            user_data[uid][raw_train.Y[i]] += 1
+        if args.use_history == "userdata":
+            user_data, user_data_size = read_emoji_dist(files.evalita_emoji_dist)
+            user_data_size = len(user_data_size)
+        else:
+            user_data = {}
+            user_data_size = len(raw_train.Y_dictionary)
+            for i in range(len(raw_train.Y)):
+                uid = raw_train.X[i][1]
+                if uid not in user_data:
+                    user_data[uid] = np.zeros([len(raw_train.Y_dictionary)], dtype=np.float16)
+                user_data[uid][raw_train.Y[i]] += 1
 
     def process_input(raw_input, user_data=None):
         if user_data is None:
@@ -92,7 +97,7 @@ if __name__ == '__main__':
             if uid in user_data:
                 distr = user_data[uid]
             else:
-                distr = np.zeros([len(raw_train.Y_dictionary)], dtype=np.float16)
+                distr = np.zeros([user_data_size], dtype=np.float16)
             history.append(distr)
 
         return [tokenizer.texts_to_sequences(texts), np.array(history)], raw_input.Y
@@ -173,6 +178,7 @@ if __name__ == '__main__':
     model_name = args.base_model
     if args.use_history:
         model_name += "_user"
+        params["history_size"] = user_data_size
     model = get_model(model_name).apply(params)
 
     """##### Load model"""
