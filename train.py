@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
     tokenizer.fit_on_texts([text for text, uid in raw_train.X])
-    vocabulary_size = min(len(tokenizer.word_index), args.max_dict)
+    vocabulary_size = min(len(tokenizer.word_index)+1, args.max_dict)
     logging.info("Vocabulary size: %d, Total words: %d" % (vocabulary_size, len(tokenizer.word_counts)))
 
     # Populating user history
@@ -195,7 +195,7 @@ if __name__ == '__main__':
 
     callbacks = {
         "test": EvalCallback("test", X_test, Y_test),
-        "train": EvalCallback("train", X_train, Y_train, period=3),
+        "train": EvalCallback("train", X_train, Y_train, period=5),
         "val": EvalCallback("validation", X_val, Y_val)
     }
     callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"])
