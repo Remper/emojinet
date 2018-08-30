@@ -32,6 +32,35 @@ EMOJIS = {
 }
 
 
+def read_emoji_dist(path):
+    user_data = {}
+    dictionary = {}
+    with open(path, 'r', encoding="utf-8") as reader:
+        first = True
+        for line in reader:
+            if first:
+                first = False
+                continue
+            line = line.rstrip().split()
+
+            emojis = json.loads(line[1])
+            user_data[line[0]] = emojis
+
+            for emoji in emojis:
+                if emoji not in dictionary:
+                    dictionary[emoji] = len(dictionary)
+
+    for user in user_data:
+        data = np.zeros([len(dictionary)])
+        cur_user = user_data[user]
+        for emoji in cur_user:
+            data[dictionary[emoji]] = cur_user[emoji]
+        user_data[user] = data
+
+    logging.info("Loaded data on %d users" % len(user_data))
+    return user_data, dictionary
+
+
 class DatasetReader:
     def __init__(self, X, Y, Y_dictionary):
         self.X = X
@@ -85,35 +114,6 @@ class SemEvalDatasetReader(DatasetReader):
 
 
 class EvalitaDatasetReader(DatasetReader):
-    def __init__(self, dataset_path: str):
-        super().__init__(*self._load(dataset_path))
-        logging.info("Loaded %d samples with %d classes for dataset %s" % (len(self.Y), len(self.Y_dictionary), dataset_path))
-
-    @staticmethod
-    def _load(path: str) -> (list, list, dict):
-        texts = []
-        labels = []
-        dictionary = {}
-
-        row = 0
-        with open(path, 'r', encoding="utf-8") as reader:
-            for line in reader:
-                line = line.rstrip()
-                sample = json.loads(line)
-                texts.append(sample["text_no_emoji"])
-                label = sample["label"]
-                if label not in dictionary:
-                    dictionary[label] = len(dictionary)
-                labels.append(dictionary[label])
-
-                row += 1
-                if row % 10000 == 0:
-                    logging.debug("  Loaded %dk texts" % (len(texts) / 1000))
-
-        return texts, np.array(labels), dictionary
-
-
-class EvalitaHistoryReader(DatasetReader):
     def __init__(self, dataset_path: str):
         super().__init__(*self._load(dataset_path))
         logging.info("Loaded %d samples with %d classes for dataset %s" % (len(self.Y), len(self.Y_dictionary), dataset_path))

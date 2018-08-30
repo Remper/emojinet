@@ -4,9 +4,9 @@ import numpy as np
 from keras.optimizers import Adam
 
 
-def base_lstm_user(vocabulary_size: int, embedding_size: int, max_seq_length: int, embedding_matrix: np.array, y_dictionary: dict) -> Model:
+def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int, max_seq_length: int, embedding_matrix: np.array, y_dictionary: dict) -> Model:
     input = Input(shape=(max_seq_length,), name='main_input')
-    history = Input(shape=(len(y_dictionary),), name='history_input')
+    history = Input(shape=(history_size,), name='history_input')
 
     model = Embedding(input_dim=vocabulary_size,
                         output_dim=embedding_size,
