@@ -54,7 +54,7 @@ python3 train_vdcnn.py
 |BASE LSTM                   |provided       |0.4415     |0.3836     |0.2408     |0.2622     |
 |Most frequent user history  |—              |0.4396     |0.4076     |0.2774     |0.3133     |
 |BASE LSTM User              |ft-it-our-100d |0.4874     |0.4343     |0.3218     |0.3565     |
-|BASE LSTM User (userdata)   |ft-it-our-100d |**0.5153** |0.4642     |**0.3477** |**0.3840** |
+|BASE LSTM User (userdata)   |ft-it-our-100d |**0.5498** |**0.4872** |**0.4097** |**0.4397** |
 
 ### Experiment log
 
