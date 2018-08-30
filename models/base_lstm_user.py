@@ -18,7 +18,11 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
     model = Bidirectional(LSTM(256))(model)
     model = Dense(len(y_dictionary), activation='softmax')(model)
 
-    h_model = Dense(len(y_dictionary), activation='softmax')(history)
+    h_model = history
+    for i in range(2):
+        h_model = Dense(256, activation='tanh', kernel_regularizer=regularizers.l2(0.00001))(h_model)
+
+    h_model = Dense(len(y_dictionary), activation='softmax')(h_model)
 
     model = Average()([model, h_model])
     model = Model([input, history], model)
