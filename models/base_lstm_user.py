@@ -25,7 +25,7 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
     attention = RepeatVector(2*units)(attention)
     attention = Permute([2, 1])(attention)
 
-    model = Multiply()[model, attention]
+    model = Multiply()([model, attention])
 
     h_model = history
     for i in range(2):
