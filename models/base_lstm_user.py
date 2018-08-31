@@ -19,17 +19,13 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
     model = Dropout(0.4)(model)
     model = Bidirectional(LSTM(units, return_sequences = True))(model)
 
-    # https://github.com/philipperemy/keras-attention-mechanism/blob/master/attention_lstm.py
-    attention_input_dim = int(model.shape[2])
-    attention = Permute((2, 1))(model)
-    attention = Reshape((attention_input_dim, 20))(attention)
-    attention = Dense(20, activation='softmax')(attention)
-    #attention = Lambda(lambda x: K.mean(x, axis=1), name='dim_reduction')(attention)
-    #attention = RepeatVector(attention_input_dim)(attention)
-    attention = Permute((2, 1), name='attention_vec')(attention)
-    attention = Multiply([model, attention], name='attention_mul')
+    attention = Dense(1, activation='tanh')(model)
+    attention = Flatten()(attention)
+    attention = Activation('softmax')(attention)
+    attention = RepeatVector(2*units)(attention)
+    attention = Permute([2, 1])(attention)
 
-    model = Flatten()(attention)
+    model = Multiply([model, attention])
 
     h_model = history
     for i in range(2):
