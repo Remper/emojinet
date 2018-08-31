@@ -17,7 +17,7 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
     model = Dropout(0.4)(model)
     model = Bidirectional(LSTM(256, return_sequences=True))(model)
 
-    attention = Dense(1, activation='tanh')(model)
+    attention = Dense(1, activation='tanh', kernel_regularizer=regularizers.l2(0.00001))(model)
     attention = Flatten()(attention)
     attention = Activation('softmax')(attention)
     attention = RepeatVector(512)(attention)
