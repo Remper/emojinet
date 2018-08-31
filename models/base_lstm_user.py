@@ -1,7 +1,20 @@
 from keras import Model, Input
-from keras.layers import Dense, Dropout, Embedding, Bidirectional, LSTM, regularizers, Average, K, Lambda, Concatenate, Flatten, Activation, RepeatVector, Permute, Multiply
+from keras.layers import Dense, Dropout, Embedding, Bidirectional, LSTM, regularizers, Average, K, Lambda, Concatenate, Flatten, Activation, RepeatVector, Permute, Multiply, Reshape
 import numpy as np
 from keras.optimizers import Adam
+
+def attention_3d_block(inputs, time_steps = 20, single_attention_vector = False):
+    # inputs.shape = (batch_size, time_steps, input_dim)
+    input_dim = int(inputs.shape[2])
+    a = Permute((2, 1))(inputs)
+    a = Reshape((input_dim, time_steps))(a) # this line is not useful. It's just to know which dimension is what.
+    a = Dense(time_steps, activation='softmax')(a)
+    if single_attention_vector:
+        a = Lambda(lambda x: K.mean(x, axis=1), name='dim_reduction')(a)
+        a = RepeatVector(input_dim)(a)
+    a_probs = Permute((2, 1), name='attention_vec')(a)
+    output_attention_mul = Multiply(name='attention_mul')([inputs, a_probs])
+    return output_attention_mul
 
 
 def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int, max_seq_length: int, embedding_matrix: np.array, y_dictionary: dict) -> Model:
@@ -17,13 +30,8 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
     model = Dropout(0.4)(model)
     model = Bidirectional(LSTM(256))(model)
 
-    attention = Dense(1, activation='tanh')(model)
-    attention = Flatten()(attention)
-    attention = Activation('softmax')(attention)
-    attention = RepeatVector(512)(attention)
-    attention = Permute([2, 1])(attention)
-
-    model = Multiply()([model, attention])
+    attention_mul = attention_3d_block(model)
+    model = Flatten()(attention_mul)
 
     h_model = history
     for i in range(2):
