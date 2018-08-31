@@ -1,11 +1,12 @@
 from keras import Model, Input
-from keras.layers import Dense, Dropout, Embedding, Bidirectional, LSTM, regularizers, Average, K, Lambda, Concatenate, Flatten, Activation, RepeatVector, Permute, Multiply, Reshape
+from keras.layers import Dense, Dropout, Embedding, Bidirectional, LSTM, regularizers, Average, K, Lambda, Concatenate
 import numpy as np
 from keras.optimizers import Adam
 
 
 def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int, max_seq_length: int, embedding_matrix: np.array, y_dictionary: dict) -> Model:
     units = 256
+    activation_units = 2 * units #because of Bidirectional
 
     input = Input(shape=(max_seq_length,), name='main_input')
     history = Input(shape=(history_size,), name='history_input')
