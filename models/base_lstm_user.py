@@ -28,7 +28,7 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
                         trainable=True,
                         embeddings_regularizer=regularizers.l2(0.000001))(input)
     model = Dropout(0.4)(model)
-    model = Bidirectional(LSTM(256))(model)
+    model = Bidirectional(LSTM(256, return_sequences=True))(model)
 
     attention_mul = attention_3d_block(model)
     model = Flatten()(attention_mul)
