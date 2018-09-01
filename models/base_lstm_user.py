@@ -31,7 +31,7 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
 
     h_model = history
     for i in range(2):
-        h_model = Dense((2*lstm_output_shape)/(i+1), activation='tanh', kernel_regularizer=regularizers.l2(0.00001))(h_model)
+        h_model = Dense(int((2*lstm_output_shape)/(i+1)), activation='tanh', kernel_regularizer=regularizers.l2(0.00001))(h_model)
 
     model = Concatenate()([model, h_model])
     model = Dense(len(y_dictionary), activation='softmax')(model)
