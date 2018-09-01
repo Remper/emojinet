@@ -13,7 +13,7 @@ from preprocessing.embeddings import restore_from_file
 from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader, read_emoji_dist
 from preprocessing.text import Tokenizer
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
-#from utils.fileprovider import FileProvider
+from utils.fileprovider import FileProvider
 #from utils.plotter import Plotter
 
 logging.getLogger().setLevel(logging.INFO)
