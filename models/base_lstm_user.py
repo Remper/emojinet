@@ -31,7 +31,7 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
     model = Dropout(0.4)(model)
     model = Bidirectional(LSTM(256, return_sequences=True))(model)
 
-    attention = attention_3d_block(model, time_steps = max_seq_length)
+    attention = attention_3d_block(model, time_steps=max_seq_length, single_attention_vector=True)
     model = Flatten()(attention)
 
     h_model = history
