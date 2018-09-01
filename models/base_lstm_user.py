@@ -1,5 +1,5 @@
 from keras import Model, Input
-from keras.layers import Dense, Dropout, Embedding, Bidirectional, LSTM, regularizers, Concatenate, Flatten, Activation, RepeatVector, Permute, Multiply, Lambda
+from keras.layers import Dense, Dropout, Embedding, Bidirectional, LSTM, regularizers, Concatenate, Flatten, Activation, RepeatVector, Permute, Multiply, Lambda, TimeDistributed
 import numpy as np
 import keras.backend as K
 from keras.optimizers import Adam
@@ -20,15 +20,13 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
     model = Dropout(0.4)(model)
     model = Bidirectional(LSTM(lstm_units, return_sequences=True))(model)
 
-    attention = Dense(1, activation='tanh')(model)
-    #attention = Flatten()(attention)
+    attention = TimeDistributed(Dense(1, activation='tanh'))(model)
+    attention = Flatten()(attention)
     attention = Activation('softmax')(attention)
-    attention = Lambda(lambda x: K.mean(x, axis=1))(attention)
     attention = RepeatVector(2*lstm_units)(attention)
     attention = Permute([2, 1])(attention)
-
-    model = Multiply()([model, attention])
-    model = Flatten()(model)
+    attention = Multiply()([model, attention])
+    model = Lambda(lambda xin: K.sum(xin, axis=-1))(attention)
 
     h_model = history
     for i in range(2):
