@@ -8,11 +8,13 @@ import logging
 
 from os import path
 from models import get_model
+from keras.models import model_from_json
 from preprocessing.embeddings import restore_from_file
 from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader, read_emoji_dist
 from preprocessing.text import Tokenizer
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from utils.fileprovider import FileProvider
+from utils.plotter import Plotter
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -110,6 +112,7 @@ if __name__ == '__main__':
     Y_class_weights *= 1.0 / np.min(Y_class_weights)
     logging.info("Class weights: %s" % str(Y_class_weights))
 
+
     del raw_train
     del raw_val
     del raw_test
@@ -184,7 +187,12 @@ if __name__ == '__main__':
     """##### Load model"""
 
     # needs also storing&restoring of the current epoch, also not sure Adam weights are preserved
-    #if path.exists(files.model):
+    #if path.exists(files.model) and path.exists(files.model_json):
+    #    logging.info("Loading model from disk")
+    #    json_file = open(files.model_json, 'r')
+    #    loaded_model_json = json_file.read()
+    #    json_file.close()
+    #    model = model_from_json(loaded_model_json)
     #    model.load_weights(files.model)
 
     """##### Continue with model"""
@@ -220,3 +228,7 @@ if __name__ == '__main__':
     logging.info("Evaluating")
 
     callbacks["test"].evaluate()
+
+    plotter = Plotter(model, X_test[0], Y_test, args.workdir)
+    logging.info("Computing and plotting confusion matrix")
+    plotter.compute_and_save_confusion_matrix()
