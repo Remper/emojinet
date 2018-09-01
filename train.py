@@ -40,7 +40,7 @@ if __name__ == '__main__':
                         help='Maximum dictionary size')
     parser.add_argument('--max-epoch', type=int, default=20,
                         help='The maximum epoch number')
-    parser.add_argument('--max-seq-length', type=int, default=40,
+    parser.add_argument('--max-seq-length', type=int, default=50,
                         help='Maximum sequence length')
     parser.add_argument('--use-history', choices=["train", "userdata"], help='Use user history to assist prediction')
     parser.add_argument('--embeddings-skip-first-line', default=False, action='store_true', help='Skip first line of the embeddings')

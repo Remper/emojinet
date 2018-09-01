@@ -1,7 +1,21 @@
 from keras import Model, Input
-from keras.layers import Dense, Dropout, Embedding, Bidirectional, LSTM, regularizers, Average, K, Lambda, Concatenate
+from keras.layers import Dense, Dropout, Embedding, Bidirectional, LSTM, regularizers, K, Lambda, Concatenate, Permute, Reshape, RepeatVector, Multiply, Flatten
 import numpy as np
 from keras.optimizers import Adam
+
+
+def attention_3d_block(inputs, time_steps, single_attention_vector = False):
+    # inputs.shape = (batch_size, time_steps, input_dim)
+    input_dim = int(inputs.shape[2])
+    a = Permute((2, 1))(inputs)
+    a = Reshape((input_dim, time_steps))(a) # this line is not useful. It's just to know which dimension is what.
+    a = Dense(time_steps, activation='softmax')(a)
+    if single_attention_vector:
+        a = Lambda(lambda x: K.mean(x, axis=1), name='dim_reduction')(a)
+        a = RepeatVector(input_dim)(a)
+    a_probs = Permute((2, 1), name='attention_vec')(a)
+    output_attention_mul = Multiply(name='attention_mul')([inputs, a_probs])
+    return output_attention_mul
 
 
 def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int, max_seq_length: int, embedding_matrix: np.array, y_dictionary: dict) -> Model:
@@ -15,7 +29,10 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
                         trainable=True,
                         embeddings_regularizer=regularizers.l2(0.000001))(input)
     model = Dropout(0.4)(model)
-    model = Bidirectional(LSTM(256))(model)
+    model = Bidirectional(LSTM(256, return_sequences=True))(model)
+
+    attention = attention_3d_block(model, time_steps = max_seq_length)
+    model = Flatten()(attention)
 
     h_model = history
     for i in range(2):
