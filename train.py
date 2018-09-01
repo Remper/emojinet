@@ -13,8 +13,8 @@ from preprocessing.embeddings import restore_from_file
 from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader, read_emoji_dist
 from preprocessing.text import Tokenizer
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
-from utils.fileprovider import FileProvider
-from utils.plotter import Plotter
+#from utils.fileprovider import FileProvider
+#from utils.plotter import Plotter
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -229,6 +229,6 @@ if __name__ == '__main__':
 
     callbacks["test"].evaluate()
 
-    plotter = Plotter(model, X_test[0], Y_test, args.workdir)
-    logging.info("Computing and plotting confusion matrix")
-    plotter.compute_and_save_confusion_matrix()
+    #plotter = Plotter(model, X_test[0], Y_test, args.workdir)
+    #logging.info("Computing and plotting confusion matrix")
+    #plotter.compute_and_save_confusion_matrix()
