@@ -5,6 +5,7 @@ from keras.utils import to_categorical
 
 import numpy as np
 import logging
+import json
 
 from os import path
 from models import get_model
@@ -68,7 +69,7 @@ if __name__ == '__main__':
     raw_train, raw_val = raw_train.split(test_size=0.1)
 
     tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
-    tokenizer.fit_on_texts([text for text, uid in raw_train.X])
+    tokenizer.fit_on_texts([text for text, uid, tid in raw_train.X])
     vocabulary_size = min(len(tokenizer.word_index)+1, args.max_dict)
     logging.info("Vocabulary size: %d, Total words: %d" % (vocabulary_size, len(tokenizer.word_counts)))
 
@@ -94,7 +95,7 @@ if __name__ == '__main__':
         texts = []
         history = []
 
-        for text, uid in raw_input.X:
+        for text, uid, tid in raw_input.X:
             texts.append(text)
             if uid in user_data:
                 distr = user_data[uid]
@@ -115,7 +116,7 @@ if __name__ == '__main__':
 
     del raw_train
     del raw_val
-    del raw_test
+    #del raw_test
 
     logging.info("Padding train and test")
 
@@ -228,6 +229,23 @@ if __name__ == '__main__':
     logging.info("Evaluating")
 
     callbacks["test"].evaluate()
+
+    # exporting predictions
+    logging.info("Making predictions on the test set")
+    predictions = model.predict(X_test)
+    assert len(raw_test.X) == len(predictions)
+
+    logging.info("Exporting predictions on the test set")
+    with open("{}/predictions.json".format(args.workdir), "w") as predictions_file:
+        len_labels = len(predictions[0])
+        for row_index in range(0, len(predictions)):
+            output_row = dict()
+            output_row["tid"] = "{}".format(raw_test.X[row_index][2]) # because tuple (tweet, uid, tid)
+            row_pred_asc_ord = np.argsort(predictions[row_index]) # row_predictions in asc order
+            assert len_labels == len(row_pred_asc_ord)
+            for label_index in range(0, len_labels):
+                output_row["label_{}".format(len_labels - label_index)] = "{}".format(row_pred_asc_ord[label_index])
+            predictions_file.write(json.dumps(output_row))
 
     #plotter = Plotter(model, X_test[0], Y_test, args.workdir)
     #logging.info("Computing and plotting confusion matrix")

@@ -129,7 +129,7 @@ class EvalitaDatasetReader(DatasetReader):
             for line in reader:
                 line = line.rstrip()
                 sample = json.loads(line)
-                texts.append((sample["text_no_emoji"], sample["uid"]))
+                texts.append((sample["text_no_emoji"], sample["uid"], sample["tid"]))
                 label = sample["label"]
                 if label not in dictionary:
                     dictionary[label] = len(dictionary)
