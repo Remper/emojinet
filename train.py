@@ -243,8 +243,8 @@ if __name__ == '__main__':
             output_row["tid"] = "{}".format(raw_test.X[row_index][2]) # because tuple (tweet, uid, tid)
             row_pred_asc_ord = np.argsort(predictions[row_index]) # row_predictions in asc order
             assert len_labels == len(row_pred_asc_ord)
-            for label_index in range(0, len_labels):
-                output_row["label_{}".format(len_labels - label_index)] = "{}".format(row_pred_asc_ord[label_index])
+            for label_index in reversed(range(0, len_labels)):
+                output_row["label_{}".format(len_labels - label_index)] = "{}".format(row_pred_asc_ord[len_labels - label_index - 1])
             predictions_file.write(json.dumps(output_row))
 
     #plotter = Plotter(model, X_test[0], Y_test, args.workdir)
