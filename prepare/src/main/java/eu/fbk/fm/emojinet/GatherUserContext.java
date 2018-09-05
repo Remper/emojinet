@@ -9,6 +9,7 @@ import eu.fbk.fm.alignments.twitter.TwitterService;
 import eu.fbk.fm.alignments.utils.flink.JsonObjectProcessor;
 import eu.fbk.fm.vectorize.preprocessing.text.TextExtractor;
 import eu.fbk.utils.core.CommandLine;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.Status;
@@ -25,6 +26,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Gathers user-related data from the list of UIDs: last 200 tweets
@@ -126,21 +128,83 @@ public class GatherUserContext implements JsonObjectProcessor {
         writer.close();
     }
 
+    public void startFromResults(Path input, Path output) throws IOException {
+        // Load the dictionary of tweets to filter out
+        Set<Long> tweets = Files.lines(input)
+            .parallel()
+            .map(line -> GSON.fromJson(line, JsonObject.class))
+            .map(obj -> Long.valueOf(get(obj, String.class, "tid")))
+            .collect(Collectors.toSet());
+
+        // Reading .json ending files one by one and writing the resulting distribution
+        FileWriter writer = new FileWriter(output.resolve("emoji_dist.tsv").toFile());
+        writer.write("uid\temoji");
+        AtomicInteger processed = new AtomicInteger();
+        AtomicInteger filtered = new AtomicInteger();
+        AtomicInteger notfiltered = new AtomicInteger();
+        Files.list(output)
+            .filter(file -> file.toString().endsWith(".json"))
+            .parallel()
+            .map(file -> {
+                String filename = file.getFileName().toString();
+                Long id = Long.valueOf(filename.substring(0, filename.length()-5));
+                List<String> emojis = new LinkedList<>();
+                try {
+                    emojis = Files
+                        .lines(file)
+                        .map(json -> GSON.fromJson(json, JsonObject.class))
+                        .filter(tweet -> {
+                            boolean result = !tweets.contains(get(tweet, Long.class, "id"));
+                            if (result) {
+                                notfiltered.getAndIncrement();
+                            } else {
+                                filtered.getAndIncrement();
+                            }
+                            return result;
+                        })
+                        .flatMap(status -> resolveEmoji(status).stream())
+                        .collect(Collectors.toList());
+                } catch (IOException e) {
+                    LOGGER.error("Error while reading data for user "+id, e);
+                }
+                return new Tuple2<>(id, emojis);
+            })
+            .forEach(tuple -> {
+                synchronized (writer) {
+                    dump(tuple.f0, tuple.f1, writer);
+                }
+                int proc = processed.incrementAndGet();
+                if (proc % 10000 == 0) {
+                    LOGGER.info("Processed "+proc+" users");
+                }
+            });
+        writer.close();
+        LOGGER.info("Done. Written "+processed.get()+" users. Filtered: "+filtered.get()+". Considered: "+notfiltered.get());
+    }
+
+    private void dump(long id, List<String> emojis, FileWriter writer) {
+        HashMap<String, Integer> distribution = new HashMap<>();
+        for (String emoji : emojis) {
+            distribution.put(emoji, distribution.getOrDefault(emoji, 0)+1);
+        }
+        try {
+            writer.write('\n');
+            writer.write(String.valueOf(id));
+            writer.write('\t');
+            writer.write(GSON.toJson(distribution));
+        } catch (IOException e) {
+            LOGGER.error("Error while writing distribution for user "+id, e);
+        }
+    }
+
     private void dump(HashMap<Long, List<JsonObject>> statuses, FileWriter writer, Path output) throws IOException {
         synchronized (GSON) {
             for (Map.Entry<Long, List<JsonObject>> entry : statuses.entrySet()) {
-                writer.write('\n');
-                writer.write(entry.getKey().toString());
-                writer.write('\t');
                 List<String> emojis = entry.getValue()
                         .stream()
                         .flatMap(status -> resolveEmoji(status).stream())
                         .collect(Collectors.toList());
-                HashMap<String, Integer> distribution = new HashMap<>();
-                for (String emoji : emojis) {
-                    distribution.put(emoji, distribution.getOrDefault(emoji, 0)+1);
-                }
-                writer.write(GSON.toJson(distribution));
+                dump(entry.getKey(), emojis, writer);
                 try (FileWriter userWriter = new FileWriter(output.resolve(entry.getKey().toString()+".json").toFile())) {
                     boolean first = true;
                     for (JsonObject status : entry.getValue()) {
@@ -187,7 +251,7 @@ public class GatherUserContext implements JsonObjectProcessor {
                         CommandLine.Type.STRING, true, false, true)
                 .withOption("c", CREDENTIALS_PATH,
                         "File with twitter credentials", "FILE",
-                        CommandLine.Type.STRING, true, false, true);
+                        CommandLine.Type.STRING, true, false, false);
     }
 
     public static void main(String[] args) throws Exception {
@@ -199,6 +263,13 @@ public class GatherUserContext implements JsonObjectProcessor {
 
             final String tweetsPath = cmd.getOptionValue(INPUT_PATH, String.class);
             final String outputPath = cmd.getOptionValue(OUTPUT_PATH, String.class);
+
+            if (!cmd.hasOption(CREDENTIALS_PATH)) {
+                //noinspection ConstantConditions
+                extractor.startFromResults(Paths.get(tweetsPath), Paths.get(outputPath));
+                return;
+            }
+
             final String credentialsPath = cmd.getOptionValue(CREDENTIALS_PATH, String.class);
 
             //noinspection ConstantConditions
