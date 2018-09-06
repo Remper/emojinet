@@ -21,15 +21,6 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
 
     blstm_model = Bidirectional(LSTM(lstm_output_shape, return_sequences=True))(model)
 
-    attention = Dense(1, activation='tanh')(blstm_model)
-    attention = Flatten()(attention)
-    attention = Activation('softmax')(attention)
-    attention = RepeatVector(2*lstm_output_shape)(attention)
-    attention = Permute([2, 1])(attention)
-
-    attention = Multiply()([blstm_model, attention])
-    blstm_model = Lambda(lambda xin: K.sum(xin, axis=-2), output_shape=(2*lstm_output_shape,))(attention)
-
     cnn_model = Conv1D(filters=512, kernel_size=5, activation='relu', padding="same",
                         kernel_regularizer=regularizers.l2(0.00001))(model)
     cnn_model = MaxPooling1D(pool_size=5)(cnn_model)
