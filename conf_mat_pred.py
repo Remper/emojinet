@@ -22,6 +22,8 @@ if __name__ == '__main__':
                         help='Maximum dictionary size')
     parser.add_argument('--max-seq-length', type=int, default=50,
                         help='Maximum sequence length')
+    parser.add_argument('--plot-cm', default=False,
+                        help='Plot confusion matrix')
 
     args = parser.parse_args()
     files = FileProvider(args.workdir)
@@ -104,7 +106,7 @@ if __name__ == '__main__':
 
     # exporting predictions
     logging.info("Making predictions on the test set")
-    predictions = model.predict(X_test)
+    predictions = model.predict(X_test[0])
     assert len(raw_test.X) == len(predictions)
 
     logging.info("Exporting predictions on the test set")
@@ -121,6 +123,7 @@ if __name__ == '__main__':
             predictions_file.write(json.dumps(output_row))
             predictions_file.write("\n")
 
-    plotter = Plotter(model, X_test[0], Y_test, args.workdir)
-    logging.info("Computing and plotting confusion matrix")
-    plotter.compute_and_save_confusion_matrix()
+    if args.plot_cm:
+        plotter = Plotter(model, X_test[0], Y_test, args.workdir)
+        logging.info("Computing and plotting confusion matrix")
+        plotter.compute_and_save_confusion_matrix()
