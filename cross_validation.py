@@ -237,6 +237,10 @@ if __name__ == "__main__":
             params["history_size"] = user_data_size
         model, multi_model = get_model(model_name).apply(params)
 
+        print(model.summary())
+
+        Y_train_one_hot = to_categorical(Y_train, num_classes=len(Y_dictionary))
+
         if multi_model is not None:
             print("MULTIMODEL")
             multi_model.fit(X_train,
@@ -246,7 +250,6 @@ if __name__ == "__main__":
                             batch_size=args.batch_size,
                             shuffle=True,
                             callbacks=[callback for callback in callbacks.values()])
-            print(multi_model.summary())
         else:
             model.fit(X_train,
                       Y_train_one_hot,
@@ -255,9 +258,6 @@ if __name__ == "__main__":
                       batch_size=args.batch_size,
                       shuffle=True,
                       callbacks=[callback for callback in callbacks.values()])
-            print(model.summary())
-
-        Y_train_one_hot = to_categorical(Y_train, num_classes=len(Y_dictionary))
 
         callbacks = {
             "test": EvalCallback("test", X_test, Y_test),
