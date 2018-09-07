@@ -6,7 +6,9 @@ from utils.fileprovider import FileProvider
 import argparse
 import string
 import re
+import logging
 
+logging.getLogger().setLevel(logging.INFO)
 
 def process_text(texts, exclude=set(string.punctuation)):
     res = []
@@ -46,16 +48,24 @@ texts_train = process_text(texts_train)
 
 vectorizer = TfidfVectorizer()
 
+logging.info("Starting vectorization")
+
 tfidf_matrix_train = vectorizer.fit_transform(texts_train)
 tfidf_matrix_test = vectorizer.fit_transform(texts_test)
 
 del texts_train
 del texts_test
 
+logging.info("Ended vectorization. Starting svm fit")
+
 clf = SVC()
 clf.fit(tfidf_matrix_train, labels_train)
 
+logging.info("Ended svm fit. Starting prediction")
+
 prediction = clf.predict(tfidf_matrix_test)
+
+logging.info("Ended prediction. Starting dump of scores")
 
 scores_file = open('scores_file.txt', 'w')
 
@@ -65,5 +75,7 @@ scores_file.write('Recall: ' + str(recall_score(prediction, labels_test)) + '\n'
 scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test)) + '\n')
 
 scores_file.close()
+
+logging.info("Done")
 
 
