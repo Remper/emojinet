@@ -60,9 +60,6 @@ tfidf_matrix_test = vectorizer.transform(texts_test)
 del texts_train
 del texts_test
 
-print(tfidf_matrix_train[0])
-print(texts_train[0])
-
 logging.info("Ended vectorization. Starting svm fit")
 
 clf = SVC()
