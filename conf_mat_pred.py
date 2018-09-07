@@ -8,7 +8,10 @@ from preprocessing.reader import EvalitaDatasetReader, read_emoji_dist
 from os import path
 from preprocessing.text import Tokenizer
 from keras.models import model_from_json
+from keras.preprocessing import sequence
 from utils.plotter import Plotter
+
+logging.getLogger().setLevel(logging.INFO)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Plot confusion matrix and export predictions')
@@ -17,6 +20,8 @@ if __name__ == '__main__':
     parser.add_argument('--use-history', choices=["train", "userdata"], help='Use user history to assist prediction')
     parser.add_argument('--max-dict', type=int, default=300000,
                         help='Maximum dictionary size')
+    parser.add_argument('--max-seq-length', type=int, default=50,
+                        help='Maximum sequence length')
 
     args = parser.parse_args()
     files = FileProvider(args.workdir)
@@ -50,7 +55,7 @@ if __name__ == '__main__':
 
     def process_input(raw_input, user_data=None):
         if user_data is None:
-            return [tokenizer.texts_to_sequences([text for text, uid in raw_train.X])], raw_input.Y
+            return [tokenizer.texts_to_sequences([text for text, uid, tid in raw_train.X])], raw_input.Y
 
         texts = []
         history = []
@@ -72,6 +77,21 @@ if __name__ == '__main__':
     Y_class_weights = len(Y_train) / np.power(np.bincount(Y_train), 1.1)
     Y_class_weights *= 1.0 / np.min(Y_class_weights)
     logging.info("Class weights: %s" % str(Y_class_weights))
+
+    del raw_train
+    del raw_val
+
+    logging.info("Padding train and test")
+
+    max_seq_length = 0
+    for seq in X_train[0]:
+        if len(seq) > max_seq_length:
+            max_seq_length = len(seq)
+    logging.info("Max sequence length in training set: %d" % max_seq_length)
+    max_seq_length = min(max_seq_length, args.max_seq_length)
+    X_train[0] = sequence.pad_sequences(X_train[0], maxlen=max_seq_length)
+    X_val[0] = sequence.pad_sequences(X_val[0], maxlen=max_seq_length)
+    X_test[0] = sequence.pad_sequences(X_test[0], maxlen=max_seq_length)
 
     assert path.exists(files.model) and path.exists(files.model_json), "Unable to find {} and {}".format(files.model, files.model_json)
 
@@ -99,7 +119,8 @@ if __name__ == '__main__':
                 output_row["label_{}".format(len_labels - label_index)] = "{}".format(
                     row_pred_asc_ord[len_labels - label_index - 1])
             predictions_file.write(json.dumps(output_row))
+            predictions_file.write("\n")
 
-    #plotter = Plotter(model, X_test[0], Y_test, args.workdir)
-    #logging.info("Computing and plotting confusion matrix")
-    #plotter.compute_and_save_confusion_matrix()
+    plotter = Plotter(model, X_test[0], Y_test, args.workdir)
+    logging.info("Computing and plotting confusion matrix")
+    plotter.compute_and_save_confusion_matrix()
