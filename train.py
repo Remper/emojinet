@@ -185,19 +185,36 @@ if __name__ == '__main__':
 
     Y_train_one_hot = to_categorical(Y_train, num_classes=len(Y_dictionary))
 
+    model, multi_model = get_model(model_name).apply(params)
+
+    print(model.summary())
+
+    Y_train_one_hot = to_categorical(Y_train, num_classes=len(Y_dictionary))
+
     callbacks = {
         "test": EvalCallback("test", X_test, Y_test),
         "train": EvalCallback("train", X_train, Y_train, period=5),
         "val": EvalCallback("validation", X_val, Y_val)
     }
+
     callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"])
-    model.fit(X_train,
-              Y_train_one_hot,
-              class_weight=Y_class_weights,
-              epochs=args.max_epoch,
-              batch_size=args.batch_size,
-              shuffle=True,
-              callbacks=[callback for callback in callbacks.values()])
+
+    if multi_model is not None:
+        multi_model.fit(X_train,
+                        Y_train_one_hot,
+                        class_weight=Y_class_weights,
+                        epochs=args.max_epoch,
+                        batch_size=args.batch_size,
+                        shuffle=True,
+                        callbacks=[callback for callback in callbacks.values()])
+    else:
+        model.fit(X_train,
+                  Y_train_one_hot,
+                  class_weight=Y_class_weights,
+                  epochs=args.max_epoch,
+                  batch_size=args.batch_size,
+                  shuffle=True,
+                  callbacks=[callback for callback in callbacks.values()])
 
     logging.info("Saving model to json")
 

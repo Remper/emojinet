@@ -1,7 +1,14 @@
+import numpy as np
+from keras.utils.training_utils import multi_gpu_model
+from tensorflow.python.client import device_lib
 from keras import Model, Input
 from keras.layers import Dense, Dropout, Embedding, Bidirectional, LSTM, regularizers, K, Lambda, Concatenate, Permute, RepeatVector, Multiply, Flatten, Activation, Conv1D, MaxPooling1D
-import numpy as np
 from keras.optimizers import Adam
+
+
+def get_available_gpus():
+    local_device_protos = device_lib.list_local_devices()
+    return [x.name for x in local_device_protos if x.device_type == "GPU"]
 
 
 def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int, max_seq_length: int, embedding_matrix: np.array, y_dictionary: dict) -> Model:
@@ -36,8 +43,17 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
     model = Model([input, history], model)
 
     optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.001)
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=optimizer,
-                  metrics=['accuracy'])
 
-    return model
+    multi_model = None
+    num_gpu = len(get_available_gpus())
+    if (num_gpu >= 2) and (num_gpu % 2 == 0):
+        multi_model = multi_gpu_model(model, gpus=num_gpu)
+        multi_model.compile(loss='categorical_crossentropy',
+                            optimizer=optimizer,
+                            metrics=['accuracy'])
+    else:
+        model.compile(loss='categorical_crossentropy',
+                      optimizer=optimizer,
+                      metrics=['accuracy'])
+
+    return model, multi_model

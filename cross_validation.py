@@ -15,7 +15,7 @@ from keras.preprocessing import sequence
 from preprocessing.embeddings import restore_from_file
 from models import get_model
 from keras.utils import to_categorical
-from keras.utils.training_utils import multi_gpu_model
+from keras.models import model_from_json
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from os import path
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    #os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.gpu)
+    os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.gpu)
 
     files = FileProvider(args.workdir)
 
@@ -250,7 +250,6 @@ if __name__ == "__main__":
         callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"])
 
         if multi_model is not None:
-            print("MULTIMODEL")
             multi_model.fit(X_train,
                             Y_train_one_hot,
                             class_weight=Y_class_weights,
@@ -287,6 +286,12 @@ if __name__ == "__main__":
             continue
         else:
             fold_number += 1
+
+        json_file = open(files.model_json, 'r')
+        loaded_model_json = json_file.read()
+        json_file.close()
+        model = model_from_json(loaded_model_json)
+        model.load_weights(files.model)
 
         # exporting predictions
         logging.info("Making predictions on the test set")
