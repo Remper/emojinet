@@ -273,7 +273,7 @@ if __name__ == "__main__":
         assert len(raw_test.X) == len(predictions)
 
         logging.info("Exporting predictions on the test set")
-        with open("{}/predictions.json".format(fold_dir), "w") as predictions_file:
+        with open("{}/{}/predictions.json".format(args.workdir, fold_dir), "w") as predictions_file:
             len_labels = len(predictions[0])
             for row_index in range(0, len(predictions)):
                 output_row = dict()
@@ -285,3 +285,5 @@ if __name__ == "__main__":
                         get_label_name(Y_dictionary, row_pred_asc_ord[len_labels - label_index - 1]))
                 predictions_file.write(json.dumps(output_row))
                 predictions_file.write("\n")
+
+        os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(1)
