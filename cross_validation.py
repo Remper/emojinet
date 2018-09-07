@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import subprocess
 import json
+import pickle
 logging.getLogger().setLevel(logging.INFO)
 
 from utils.fileprovider import FileProvider
@@ -148,6 +149,10 @@ if __name__ == "__main__":
         tokenizer.fit_on_texts([text for text, uid, tid in X_train])
         vocabulary_size = min(len(tokenizer.word_index) + 1, args.max_dict)
         logging.info("Vocabulary size: %d, Total words: %d" % (vocabulary_size, len(tokenizer.word_counts)))
+
+        logging.info("Dumping Tokenizer")
+        with open("{}/{}/{}".format(args.workdir, fold_dir, "tokenizer.pickle"), "wb") as tokenizer_pickle_file:
+            pickle.dump(tokenizer, tokenizer_pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
         X_train = process_input(tokenizer, X_train, user_data)
         X_val = process_input(tokenizer, X_val, user_data)
