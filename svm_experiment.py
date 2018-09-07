@@ -1,5 +1,5 @@
 from preprocessing.reader import EvalitaDatasetReader
-from preprocessing.text import Tokenizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from utils.fileprovider import FileProvider
 import argparse
 import string
@@ -21,8 +21,6 @@ args = parser.parse_args()
 files = FileProvider(args.workdir)
 raw_train, raw_test = EvalitaDatasetReader(files.evalita).split()
 
-tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
-
 texts = []
 
 for elem in raw_train.X:
@@ -30,7 +28,10 @@ for elem in raw_train.X:
 
 texts = process_text(texts)
 
-tokenizer.fit_on_texts(texts)
-tfidf_matrix = tokenizer.texts_to_matrix(texts=texts, mode='tfidf')
+vectorizer = TfidfVectorizer()
 
-print(tfidf_matrix[:5])
+tfidf_matrix = vectorizer.fit_transform(texts)
+
+dense_matrix = tfidf_matrix.toarray()
+
+
