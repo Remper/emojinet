@@ -275,22 +275,16 @@ if __name__ == "__main__":
 
         model.save_weights(files.model)
 
-        #logging.info("Evaluating")
+        logging.info("Evaluating")
 
-        #f1_score = callbacks["test"].evaluate()
+        f1_score = callbacks["test"].evaluate()
 
-        #delta = 0.015 * 0.44
-        #if f1_score < (0.44 - delta):
-        #    print("here")
-        #    continue
-        #else:
-        #    fold_number += 1
-
-        json_file = open(files.model_json, 'r')
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = model_from_json(loaded_model_json)
-        model.load_weights(files.model)
+        delta = 0.015 * 0.44
+        if f1_score < (0.44 - delta):
+            print("here")
+            continue
+        else:
+            fold_number += 1
 
         # exporting predictions
         logging.info("Making predictions on the test set")
