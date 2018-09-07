@@ -114,3 +114,6 @@ evalita_data
 
 # embeddings directory
 embeddings
+
+# training data directory
+data
