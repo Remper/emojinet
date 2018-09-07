@@ -15,7 +15,6 @@ from keras.preprocessing import sequence
 from preprocessing.embeddings import restore_from_file
 from models import get_model
 from keras.utils import to_categorical
-from keras.utils.training_utils import multi_gpu_model
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from os import path
 
