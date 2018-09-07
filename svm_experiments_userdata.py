@@ -118,7 +118,7 @@ complete_matrix_test = hstack([tfidf_matrix_test, csr_matrix(user_data[user_ids_
 
 logging.info("Fitting")
 
-clf = SVC()
+clf = SVC(verbose=True)
 clf.fit(complete_matrix_train, labels_train)
 
 logging.info("Predicting")
@@ -129,10 +129,10 @@ logging.info("Dumping scores")
 
 scores_file = open('scores_file.txt', 'w')
 
-scores_file.write('Accuracy: ' + str(accuracy_score(prediction, labels_test)) + '\n')
-scores_file.write('Precision: ' + str(precision_score(prediction, labels_test)) + '\n')
-scores_file.write('Recall: ' + str(recall_score(prediction, labels_test)) + '\n')
-scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test)) + '\n')
+scores_file.write('Accuracy: ' + str(accuracy_score(prediction, labels_test, average='macro')) + '\n')
+scores_file.write('Precision: ' + str(precision_score(prediction, labels_test, average='macro')) + '\n')
+scores_file.write('Recall: ' + str(recall_score(prediction, labels_test, average='macro')) + '\n')
+scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test, average='macro')) + '\n')
 
 scores_file.close()
 
