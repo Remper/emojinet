@@ -127,7 +127,7 @@ prediction = clf.predict(complete_matrix_test)
 
 logging.info("Dumping scores")
 
-scores_file = open('scores_file.txt', 'w')
+scores_file = open('scores_file_userdata.txt', 'w')
 
 scores_file.write('Accuracy: ' + str(accuracy_score(prediction, labels_test)) + '\n')
 scores_file.write('Precision: ' + str(precision_score(prediction, labels_test, average='macro')) + '\n')
