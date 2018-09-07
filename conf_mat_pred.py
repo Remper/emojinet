@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     # exporting predictions
     logging.info("Making predictions on the test set")
-    predictions = model.predict(X_test[0])
+    predictions = model.predict(X_test)
     assert len(raw_test.X) == len(predictions)
 
     logging.info("Exporting predictions on the test set")
