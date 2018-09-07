@@ -5,7 +5,6 @@ import numpy as np
 import subprocess
 import json
 import pickle
-import importlib
 logging.getLogger().setLevel(logging.INFO)
 
 from utils.fileprovider import FileProvider
@@ -16,6 +15,7 @@ from keras.preprocessing import sequence
 from preprocessing.embeddings import restore_from_file
 from models import get_model
 from keras.utils import to_categorical
+from keras.utils.training_utils import multi_gpu_model
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from os import path
 
@@ -294,6 +294,3 @@ if __name__ == "__main__":
                         get_label_name(Y_dictionary, row_pred_asc_ord[len_labels - label_index - 1]))
                 predictions_file.write(json.dumps(output_row))
                 predictions_file.write("\n")
-
-        os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(1)
-        import tensorflow
