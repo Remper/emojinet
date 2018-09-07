@@ -14,6 +14,7 @@ def process_text(texts, exclude=set(string.punctuation)):
     res = []
     for text in texts:
         text = re.sub(r'http\S+', '', text)
+        text = text.lower()
         res.append(''.join(ch for ch in text if ch not in exclude))
     return res
 
@@ -50,8 +51,11 @@ vectorizer = TfidfVectorizer()
 
 logging.info("Starting vectorization")
 
-tfidf_matrix_train = vectorizer.fit_transform(texts_train)
-tfidf_matrix_test = vectorizer.fit_transform(texts_test)
+vectorizer.fit(texts_train)
+
+tfidf_matrix_train = vectorizer.transform(texts_train)
+
+tfidf_matrix_test = vectorizer.transform(texts_test)
 
 del texts_train
 del texts_test
@@ -77,5 +81,3 @@ scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test)) + '\n')
 scores_file.close()
 
 logging.info("Done")
-
-
