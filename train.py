@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.gpu)
+    #os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.gpu)
 
     files = FileProvider(args.workdir)
     logging.info("Starting training with parameters: {0}".format(vars(args)))
