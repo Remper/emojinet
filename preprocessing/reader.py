@@ -34,6 +34,8 @@ EMOJIS = {
 
 def read_emoji_dist(path):
     user_data = {}
+    sg_data = {}
+    sg_size = None
     dictionary = {}
     with open(path, 'r', encoding="utf-8") as reader:
         first = True
@@ -43,8 +45,11 @@ def read_emoji_dist(path):
                 continue
             line = line.rstrip().split()
 
-            emojis = json.loads(line[1])
+            emojis = json.loads(line[2])
             user_data[line[0]] = emojis
+            sg_data[line[0]] = np.array(json.loads(line[1]))
+            if sg_size is None:
+                sg_size = sg_data[line[0]].shape[0]
 
             for emoji in emojis:
                 if emoji not in dictionary:
@@ -57,8 +62,8 @@ def read_emoji_dist(path):
             data[dictionary[emoji]] = cur_user[emoji]
         user_data[user] = data
 
-    logging.info("Loaded data on %d users" % len(user_data))
-    return user_data, dictionary
+    logging.info("Loaded data on %d users with social graph embeddings of size %d" % (len(user_data), sg_size))
+    return user_data, sg_data, dictionary, sg_size
 
 
 class DatasetReader:

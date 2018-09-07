@@ -61,11 +61,11 @@ if __name__ == '__main__':
         raw_test = SemEvalDatasetReader(files.semeval_test)
     else:
         if not path.exists(files.evalita_train):
-            raw_train, raw_test = EvalitaDatasetReader(files.evalita).split()
+            raw_train, raw_test = EvalitaDatasetReader(files.evalita).split(random_state=None)
         else:
             raw_train = EvalitaDatasetReader(files.evalita_train)
             raw_test = EvalitaDatasetReader(files.evalita_test)
-    raw_train, raw_val = raw_train.split(test_size=0.1)
+    raw_train, raw_val = raw_train.split(test_size=0.1, random_state=None)
 
     tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
     tokenizer.fit_on_texts([text for text, uid in raw_train.X])
@@ -74,9 +74,10 @@ if __name__ == '__main__':
 
     # Populating user history
     user_data = None
+    sg_data = None
     if args.use_history:
         if args.use_history == "userdata":
-            user_data, user_data_size = read_emoji_dist(files.evalita_emoji_dist)
+            user_data, sg_data, user_data_size, sg_size = read_emoji_dist(files.evalita_emoji_dist)
             user_data_size = len(user_data_size)
         else:
             user_data = {}
@@ -87,26 +88,33 @@ if __name__ == '__main__':
                     user_data[uid] = np.zeros([len(raw_train.Y_dictionary)], dtype=np.float16)
                 user_data[uid][raw_train.Y[i]] += 1
 
-    def process_input(raw_input, user_data=None):
+    def process_input(raw_input, user_data=None, sg_data=None):
         if user_data is None:
             return [tokenizer.texts_to_sequences([text for text, uid in raw_train.X])], raw_input.Y
 
         texts = []
         history = []
+        social_graph = []
 
         for text, uid in raw_input.X:
             texts.append(text)
             if uid in user_data:
                 distr = user_data[uid]
+                u_social_graph = sg_data[uid]
             else:
                 distr = np.zeros([user_data_size], dtype=np.float16)
+                u_social_graph = np.zeros([sg_size], dtype=np.float64)
             history.append(distr)
+            social_graph.append(u_social_graph)
 
-        return [tokenizer.texts_to_sequences(texts), np.array(history)], raw_input.Y
+        return [tokenizer.texts_to_sequences(texts), np.array(history), np.stack(social_graph)], raw_input.Y
 
-    X_train, Y_train = process_input(raw_train, user_data)
-    X_val, Y_val = process_input(raw_val, user_data)
-    X_test, Y_test = process_input(raw_test, user_data)
+    X_train, Y_train = process_input(raw_train, user_data, sg_data)
+    logging.info(" Training set done")
+    X_val, Y_val = process_input(raw_val, user_data, sg_data)
+    logging.info(" Validation set done")
+    X_test, Y_test = process_input(raw_test, user_data, sg_data)
+    logging.info(" Test set done")
     Y_dictionary = raw_train.Y_dictionary
     Y_class_weights = len(Y_train) / np.power(np.bincount(Y_train), 1.1)
     Y_class_weights *= 1.0 / np.min(Y_class_weights)
@@ -182,6 +190,7 @@ if __name__ == '__main__':
     if args.use_history:
         model_name += "_user"
         params["history_size"] = user_data_size
+        params["sg_size"] = sg_size
     model = get_model(model_name).apply(params)
 
     """##### Load model"""

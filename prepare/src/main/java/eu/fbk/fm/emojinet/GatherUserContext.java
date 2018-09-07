@@ -1,15 +1,19 @@
 package eu.fbk.fm.emojinet;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import eu.fbk.fm.alignments.twitter.SearchRunner;
 import eu.fbk.fm.alignments.twitter.TwitterCredentials;
 import eu.fbk.fm.alignments.twitter.TwitterDeserializer;
 import eu.fbk.fm.alignments.twitter.TwitterService;
 import eu.fbk.fm.alignments.utils.flink.JsonObjectProcessor;
+import eu.fbk.fm.emojinet.util.GetSGEmbedding;
 import eu.fbk.fm.vectorize.preprocessing.text.TextExtractor;
 import eu.fbk.utils.core.CommandLine;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import twitter4j.Status;
@@ -18,6 +22,7 @@ import twitter4j.TwitterObjectFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -128,50 +133,71 @@ public class GatherUserContext implements JsonObjectProcessor {
         writer.close();
     }
 
-    public void startFromResults(Path input, Path output) throws IOException {
-        // Load the dictionary of tweets to filter out
-        Set<Long> tweets = Files.lines(input)
-            .parallel()
-            .map(line -> GSON.fromJson(line, JsonObject.class))
-            .map(obj -> Long.valueOf(get(obj, String.class, "tid")))
-            .collect(Collectors.toSet());
-
+    public void startFromResults(Path output) throws IOException, URISyntaxException {
         // Reading .json ending files one by one and writing the resulting distribution
         FileWriter writer = new FileWriter(output.resolve("emoji_dist.tsv").toFile());
-        writer.write("uid\temoji");
+        writer.write("uid\tsgemb\temoji");
         AtomicInteger processed = new AtomicInteger();
-        AtomicInteger filtered = new AtomicInteger();
-        AtomicInteger notfiltered = new AtomicInteger();
+        GetSGEmbedding embeddingProvider = new GetSGEmbedding("sg300");
         Files.list(output)
             .filter(file -> file.toString().endsWith(".json"))
             .parallel()
             .map(file -> {
+                double[] socialEmbedding = new double[0];
                 String filename = file.getFileName().toString();
                 Long id = Long.valueOf(filename.substring(0, filename.length()-5));
                 List<String> emojis = new LinkedList<>();
                 try {
-                    emojis = Files
+                    List<JsonObject> tweets = Files
                         .lines(file)
                         .map(json -> GSON.fromJson(json, JsonObject.class))
-                        .filter(tweet -> {
-                            boolean result = !tweets.contains(get(tweet, Long.class, "id"));
-                            if (result) {
-                                notfiltered.getAndIncrement();
-                            } else {
-                                filtered.getAndIncrement();
-                            }
-                            return result;
-                        })
+                        .collect(Collectors.toList());
+                    emojis = tweets.stream()
                         .flatMap(status -> resolveEmoji(status).stream())
                         .collect(Collectors.toList());
+
+                    //Constructing a fake social graph
+                    HashMap<Long, Float> socialGraph =  new HashMap<>();
+                    float norm = 0.0f;
+                    for (JsonObject status : tweets) {
+                        JsonObject entities = status.getAsJsonObject("entities");
+
+                        //Retweet author
+                        Long originalAuthorId = get(status, Long.class, "retweeted_status", "user", "id");
+                        JsonObject retweetedObject = status.getAsJsonObject("retweeted_status");
+                        if (originalAuthorId != null) {
+                            socialGraph.put(originalAuthorId, socialGraph.getOrDefault(originalAuthorId, 0.0f)+1.0f);
+                            norm += 1.0f;
+                        }
+
+                        //Mentions
+                        JsonArray rawMentions = entities.getAsJsonArray("user_mentions");
+                        for (JsonElement rawMention : rawMentions) {
+                            Long mentionId = get(rawMention, Long.class, "id");
+                            if (mentionId == null) {
+                                continue;
+                            }
+                            socialGraph.put(mentionId, socialGraph.getOrDefault(mentionId, 0.0f)+1.0f);
+                            norm += 1.0f;
+                        }
+                    }
+                    Long[] ids = new Long[socialGraph.size()];
+                    Float[] weights = new Float[socialGraph.size()];
+                    int pointer = 0;
+                    for (Map.Entry<Long, Float> entry : socialGraph.entrySet()) {
+                        ids[pointer] = entry.getKey();
+                        weights[pointer] = entry.getValue() / norm;
+                        pointer++;
+                    }
+                    socialEmbedding = embeddingProvider.predict(ids, weights);
                 } catch (IOException e) {
                     LOGGER.error("Error while reading data for user "+id, e);
                 }
-                return new Tuple2<>(id, emojis);
+                return new Tuple3<>(id, socialEmbedding, emojis);
             })
             .forEach(tuple -> {
                 synchronized (writer) {
-                    dump(tuple.f0, tuple.f1, writer);
+                    dump(tuple.f0, tuple.f2, tuple.f1, writer);
                 }
                 int proc = processed.incrementAndGet();
                 if (proc % 10000 == 0) {
@@ -179,10 +205,10 @@ public class GatherUserContext implements JsonObjectProcessor {
                 }
             });
         writer.close();
-        LOGGER.info("Done. Written "+processed.get()+" users. Filtered: "+filtered.get()+". Considered: "+notfiltered.get());
+        LOGGER.info("Done. Written "+processed.get()+" users.");
     }
 
-    private void dump(long id, List<String> emojis, FileWriter writer) {
+    private void dump(long id, List<String> emojis, double[] socialEmbedding, FileWriter writer) {
         HashMap<String, Integer> distribution = new HashMap<>();
         for (String emoji : emojis) {
             distribution.put(emoji, distribution.getOrDefault(emoji, 0)+1);
@@ -190,6 +216,8 @@ public class GatherUserContext implements JsonObjectProcessor {
         try {
             writer.write('\n');
             writer.write(String.valueOf(id));
+            writer.write('\t');
+            writer.write(GSON.toJson(socialEmbedding));
             writer.write('\t');
             writer.write(GSON.toJson(distribution));
         } catch (IOException e) {
@@ -204,7 +232,7 @@ public class GatherUserContext implements JsonObjectProcessor {
                         .stream()
                         .flatMap(status -> resolveEmoji(status).stream())
                         .collect(Collectors.toList());
-                dump(entry.getKey(), emojis, writer);
+                dump(entry.getKey(), emojis, new double[0], writer);
                 try (FileWriter userWriter = new FileWriter(output.resolve(entry.getKey().toString()+".json").toFile())) {
                     boolean first = true;
                     for (JsonObject status : entry.getValue()) {
@@ -266,7 +294,7 @@ public class GatherUserContext implements JsonObjectProcessor {
 
             if (!cmd.hasOption(CREDENTIALS_PATH)) {
                 //noinspection ConstantConditions
-                extractor.startFromResults(Paths.get(tweetsPath), Paths.get(outputPath));
+                extractor.startFromResults(Paths.get(outputPath));
                 return;
             }
 
