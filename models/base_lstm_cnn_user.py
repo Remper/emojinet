@@ -4,7 +4,7 @@ import numpy as np
 from keras.optimizers import Adam
 
 
-def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int, max_seq_length: int, embedding_matrix: np.array, y_dictionary: dict) -> Model:
+def base_lstm_cnn_user(vocabulary_size: int, embedding_size: int, history_size: int, max_seq_length: int, embedding_matrix: np.array, y_dictionary: dict) -> Model:
 
     lstm_output_shape = 256
 

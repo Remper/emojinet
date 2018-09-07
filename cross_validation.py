@@ -133,6 +133,7 @@ if __name__ == "__main__":
     skf = StratifiedKFold(n_splits=args.n_folds, random_state=random_state)
     fold_number = 0
     skf_split = list(skf.split(raw_train.X, raw_train.Y))
+
     while fold_number < skf.get_n_splits(raw_train.X, raw_train.Y):
 
         train_index, val_index = skf_split[fold_number]
