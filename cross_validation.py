@@ -269,8 +269,8 @@ if __name__ == "__main__":
 
         f1_score = callbacks["test"].evaluate()
 
-        print(f1_score)
-        if f1_score < (0.015 * 0.44):
+        delta = 0.015 * 0.44
+        if f1_score < (0.44 - delta):
             print("here")
             continue
         else:
