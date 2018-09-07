@@ -1,5 +1,7 @@
 from preprocessing.reader import EvalitaDatasetReader
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from utils.fileprovider import FileProvider
 import argparse
 import string
@@ -21,17 +23,47 @@ args = parser.parse_args()
 files = FileProvider(args.workdir)
 raw_train, raw_test = EvalitaDatasetReader(files.evalita).split()
 
-texts = []
+texts_train = []
+texts_test = []
+labels_train = []
+labels_test = []
 
 for elem in raw_train.X:
-    texts.append(elem[0])
+    texts_train.append(elem[0])
 
-texts = process_text(texts)
+for elem in raw_test.X:
+    texts_test.append(elem[0])
+    
+for elem in raw_train.Y:
+    labels_train.append(elem)
+
+for elem in raw_test.Y:
+    labels_test.append()
+
+del raw_train
+
+texts_train = process_text(texts_train)
 
 vectorizer = TfidfVectorizer()
 
-tfidf_matrix = vectorizer.fit_transform(texts)
+tfidf_matrix_train = vectorizer.fit_transform(texts_train)
+tfidf_matrix_test = vectorizer.fit_transform(texts_test)
 
-dense_matrix = tfidf_matrix.toarray()
+del texts_train
+del texts_test
+
+clf = SVC()
+clf.fit(tfidf_matrix_train, labels_train)
+
+prediction = clf.predict(tfidf_matrix_test)
+
+scores_file = open('scores_file.txt', 'w')
+
+scores_file.write('Accuracy: ' + str(accuracy_score(prediction, labels_test)) + '\n')
+scores_file.write('Precision: ' + str(precision_score(prediction, labels_test)) + '\n')
+scores_file.write('Recall: ' + str(recall_score(prediction, labels_test)) + '\n')
+scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test)) + '\n')
+
+scores_file.close()
 
 
