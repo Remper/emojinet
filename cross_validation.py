@@ -5,6 +5,7 @@ import numpy as np
 import subprocess
 import json
 import pickle
+import importlib
 logging.getLogger().setLevel(logging.INFO)
 
 from utils.fileprovider import FileProvider
@@ -268,7 +269,9 @@ if __name__ == "__main__":
 
         f1_score = callbacks["test"].evaluate()
 
+        print(f1_score)
         if f1_score < (0.015 * 0.44):
+            print("here")
             continue
         else:
             fold_number += 1
@@ -291,3 +294,6 @@ if __name__ == "__main__":
                         get_label_name(Y_dictionary, row_pred_asc_ord[len_labels - label_index - 1]))
                 predictions_file.write(json.dumps(output_row))
                 predictions_file.write("\n")
+
+        os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(1)
+        import tensorflow
