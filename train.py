@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    #os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.gpu)
+    os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(args.gpu)
 
     files = FileProvider(args.workdir)
     logging.info("Starting training with parameters: {0}".format(vars(args)))
@@ -179,7 +179,9 @@ if __name__ == '__main__':
     if args.use_history:
         model_name += "_user"
         params["history_size"] = user_data_size
-    model, multi_model = get_model(model_name).apply(params)
+    model = get_model(model_name).apply(params)
+
+    print(model.summary())
 
     Y_train_one_hot = to_categorical(Y_train, num_classes=len(Y_dictionary))
 
@@ -189,26 +191,13 @@ if __name__ == '__main__':
         "val": EvalCallback("validation", X_val, Y_val)
     }
     callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"])
-
-    if multi_model is not None:
-        print("MULTIMODEL")
-        multi_model.fit(X_train,
-                        Y_train_one_hot,
-                        class_weight=Y_class_weights,
-                        epochs=args.max_epoch,
-                        batch_size=args.batch_size,
-                        shuffle=True,
-                        callbacks=[callback for callback in callbacks.values()])
-        print(model.summary())
-    else:
-        model.fit(X_train,
-                  Y_train_one_hot,
-                  class_weight=Y_class_weights,
-                  epochs=args.max_epoch,
-                  batch_size=args.batch_size,
-                  shuffle=True,
-                  callbacks=[callback for callback in callbacks.values()])
-        print(model.summary())
+    model.fit(X_train,
+              Y_train_one_hot,
+              class_weight=Y_class_weights,
+              epochs=args.max_epoch,
+              batch_size=args.batch_size,
+              shuffle=True,
+              callbacks=[callback for callback in callbacks.values()])
 
     logging.info("Saving model to json")
 
