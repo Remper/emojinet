@@ -179,7 +179,7 @@ if __name__ == '__main__':
     if args.use_history:
         model_name += "_user"
         params["history_size"] = user_data_size
-    model = get_model(model_name).apply(params)
+    model, multi_model = get_model(model_name).apply(params)
 
     print(model.summary())
 
@@ -191,13 +191,23 @@ if __name__ == '__main__':
         "val": EvalCallback("validation", X_val, Y_val)
     }
     callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"])
-    model.fit(X_train,
-              Y_train_one_hot,
-              class_weight=Y_class_weights,
-              epochs=args.max_epoch,
-              batch_size=args.batch_size,
-              shuffle=True,
-              callbacks=[callback for callback in callbacks.values()])
+
+    if multi_model is not None:
+        multi_model.fit(X_train,
+                        Y_train_one_hot,
+                        class_weight=Y_class_weights,
+                        epochs=args.max_epoch,
+                        batch_size=args.batch_size,
+                        shuffle=True,
+                        callbacks=[callback for callback in callbacks.values()])
+    else:
+        model.fit(X_train,
+                  Y_train_one_hot,
+                  class_weight=Y_class_weights,
+                  epochs=args.max_epoch,
+                  batch_size=args.batch_size,
+                  shuffle=True,
+                  callbacks=[callback for callback in callbacks.values()])
 
     logging.info("Saving model to json")
 
