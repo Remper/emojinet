@@ -47,25 +47,22 @@ del raw_train
 
 texts_train = process_text(texts_train)
 
-vectorizer_train = TfidfVectorizer()
+vectorizer = TfidfVectorizer()
 
 logging.info("Starting vectorization")
 
-tfidf_matrix_train = vectorizer_train.fit_transform(texts_train)
+vectorizer.fit(texts_train)
 
-vectorizer_test = TfidfVectorizer()
+tfidf_matrix_train = vectorizer.transform(texts_train)
 
-tfidf_matrix_test = vectorizer_test.fit_transform(texts_test)
+tfidf_matrix_test = vectorizer.transform(texts_test)
 
-#del texts_train
-#del texts_test
+del texts_train
+del texts_test
 
 print(tfidf_matrix_train[0])
 print(texts_train[0])
 
-
-
-'''
 logging.info("Ended vectorization. Starting svm fit")
 
 clf = SVC()
@@ -87,5 +84,3 @@ scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test)) + '\n')
 scores_file.close()
 
 logging.info("Done")
-'''
-
