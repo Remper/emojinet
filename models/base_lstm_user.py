@@ -20,15 +20,6 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
     model = Dropout(0.4)(model)
     model = Bidirectional(LSTM(lstm_output_shape, return_sequences=True))(model)
 
-    attention = Dense(1, activation='tanh')(model)
-    attention = Flatten()(attention)
-    attention = Activation('softmax')(attention)
-    attention = RepeatVector(2*lstm_output_shape)(attention)
-    attention = Permute([2, 1])(attention)
-
-    attention = Multiply()([model, attention])
-    model = Lambda(lambda xin: K.sum(xin, axis=-2), output_shape=(2*lstm_output_shape,))(attention)
-
     h_model = history
     for i in range(2):
         h_model = Dense(256, activation='tanh', kernel_regularizer=regularizers.l2(0.00001))(h_model)

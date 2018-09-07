@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     del raw_train
     del raw_val
-    #del raw_test
+    del raw_test
 
     logging.info("Padding train and test")
 
@@ -229,24 +229,3 @@ if __name__ == '__main__':
     logging.info("Evaluating")
 
     callbacks["test"].evaluate()
-
-    # exporting predictions
-    logging.info("Making predictions on the test set")
-    predictions = model.predict(X_test)
-    assert len(raw_test.X) == len(predictions)
-
-    logging.info("Exporting predictions on the test set")
-    with open("{}/predictions.json".format(args.workdir), "w") as predictions_file:
-        len_labels = len(predictions[0])
-        for row_index in range(0, len(predictions)):
-            output_row = dict()
-            output_row["tid"] = "{}".format(raw_test.X[row_index][2]) # because tuple (tweet, uid, tid)
-            row_pred_asc_ord = np.argsort(predictions[row_index]) # row_predictions in asc order
-            assert len_labels == len(row_pred_asc_ord)
-            for label_index in reversed(range(0, len_labels)):
-                output_row["label_{}".format(len_labels - label_index)] = "{}".format(row_pred_asc_ord[len_labels - label_index - 1])
-            predictions_file.write(json.dumps(output_row))
-
-    #plotter = Plotter(model, X_test[0], Y_test, args.workdir)
-    #logging.info("Computing and plotting confusion matrix")
-    #plotter.compute_and_save_confusion_matrix()
