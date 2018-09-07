@@ -62,7 +62,7 @@ del texts_test
 
 logging.info("Ended vectorization. Starting svm fit")
 
-clf = SVC()
+clf = SVC(verbose=True)
 clf.fit(tfidf_matrix_train, labels_train)
 
 logging.info("Ended svm fit. Starting prediction")

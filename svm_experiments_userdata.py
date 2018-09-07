@@ -118,7 +118,7 @@ complete_matrix_test = hstack([tfidf_matrix_test, csr_matrix(user_data[user_ids_
 
 logging.info("Fitting")
 
-clf = SVC()
+clf = SVC(verbose=True)
 clf.fit(complete_matrix_train, labels_train)
 
 logging.info("Predicting")
