@@ -120,19 +120,19 @@ if __name__ == "__main__":
         return [tokenizer.texts_to_sequences(texts), np.array(history)]
 
     logging.info("Processing input")
-    X_train, Y_train = process_input(raw_train, user_data)
+    raw_train.X = np.array(raw_train.X)
 
     skf = StratifiedKFold(n_splits=args.n_folds, random_state=random_state)
     fold_number = 0
     for train_index, val_index in skf.split(raw_train.X, raw_train.Y):
         logging.info("Starting with run number: {}".format(fold_number))
 
-        assert (subprocess.call("mkdir -p {}/{}/{}".format(args.workir,
-                                                           "{}_{}".format(args.base_model, args.history),
+        assert (subprocess.call("mkdir -p {}/{}/{}".format(args.workdir,
+                                                           "{}_{}".format(args.base_model, args.use_history),
                                                            "fold_{}".format(fold_number)), shell=True) == 0), "unable to mkdir"
 
-        files.model = path.join(args.workdir, "{}_{}/{}/{}".format(args.base_model, args.history, "fold_{}".format(fold_number), "model.h5"))
-        files.model_json = path.join(args.workdir, "{}_{}/{}/{}".format(args.base_model, args.history, "fold_{}".format(fold_number), "model.json"))
+        files.model = path.join(args.workdir, "{}_{}/{}/{}".format(args.base_model, args.use_history, "fold_{}".format(fold_number), "model.h5"))
+        files.model_json = path.join(args.workdir, "{}_{}/{}/{}".format(args.base_model, args.use_history, "fold_{}".format(fold_number), "model.json"))
 
         X_train, X_val = raw_train.X[train_index], raw_train.X[val_index]
         Y_train, Y_val = raw_train.Y[train_index], raw_train.Y[val_index]
@@ -254,8 +254,3 @@ if __name__ == "__main__":
         callbacks["test"].evaluate()
 
         fold_number += 1
-
-
-
-
-
