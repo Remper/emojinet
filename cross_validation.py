@@ -268,7 +268,7 @@ if __name__ == "__main__":
         assert len(raw_test.X) == len(predictions)
 
         logging.info("Exporting predictions on the test set")
-        with open("{}/predictions.json".format(args.workdir), "w") as predictions_file:
+        with open("{}/predictions.json".format(fold_dir), "w") as predictions_file:
             len_labels = len(predictions[0])
             for row_index in range(0, len(predictions)):
                 output_row = dict()
