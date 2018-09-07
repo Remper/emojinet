@@ -1,10 +1,14 @@
 from preprocessing.reader import EvalitaDatasetReader
-from preprocessing.text import Tokenizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from utils.fileprovider import FileProvider
 import argparse
 import string
 import re
+import logging
 
+logging.getLogger().setLevel(logging.INFO)
 
 def process_text(texts, exclude=set(string.punctuation)):
     res = []
@@ -21,16 +25,57 @@ args = parser.parse_args()
 files = FileProvider(args.workdir)
 raw_train, raw_test = EvalitaDatasetReader(files.evalita).split()
 
-tokenizer = Tokenizer(num_words=args.max_dict, lower=True)
-
-texts = []
+texts_train = []
+texts_test = []
+labels_train = []
+labels_test = []
 
 for elem in raw_train.X:
-    texts.append(elem[0])
+    texts_train.append(elem[0])
 
-texts = process_text(texts)
+for elem in raw_test.X:
+    texts_test.append(elem[0])
+    
+for elem in raw_train.Y:
+    labels_train.append(elem)
 
-tokenizer.fit_on_texts(texts)
-tfidf_matrix = tokenizer.texts_to_matrix(texts=texts, mode='tfidf')
+for elem in raw_test.Y:
+    labels_test.append(elem)
 
-print(tfidf_matrix[:5])
+del raw_train
+
+texts_train = process_text(texts_train)
+
+vectorizer = TfidfVectorizer()
+
+logging.info("Starting vectorization")
+
+tfidf_matrix_train = vectorizer.fit_transform(texts_train)
+tfidf_matrix_test = vectorizer.fit_transform(texts_test)
+
+del texts_train
+del texts_test
+
+logging.info("Ended vectorization. Starting svm fit")
+
+clf = SVC()
+clf.fit(tfidf_matrix_train, labels_train)
+
+logging.info("Ended svm fit. Starting prediction")
+
+prediction = clf.predict(tfidf_matrix_test)
+
+logging.info("Ended prediction. Starting dump of scores")
+
+scores_file = open('scores_file.txt', 'w')
+
+scores_file.write('Accuracy: ' + str(accuracy_score(prediction, labels_test)) + '\n')
+scores_file.write('Precision: ' + str(precision_score(prediction, labels_test)) + '\n')
+scores_file.write('Recall: ' + str(recall_score(prediction, labels_test)) + '\n')
+scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test)) + '\n')
+
+scores_file.close()
+
+logging.info("Done")
+
+
