@@ -18,7 +18,7 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
                         trainable=True,
                         embeddings_regularizer=regularizers.l2(0.000001))(input)
     model = Dropout(0.4)(model)
-    model = Bidirectional(LSTM(lstm_output_shape, return_sequences=True))(model)
+    model = Bidirectional(LSTM(lstm_output_shape, return_sequences=False))(model)
 
     h_model = history
     for i in range(2):

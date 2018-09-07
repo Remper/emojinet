@@ -19,7 +19,7 @@ def base_lstm_user(vocabulary_size: int, embedding_size: int, history_size: int,
                         embeddings_regularizer=regularizers.l2(0.000001))(input)
     model = Dropout(0.4)(model)
 
-    blstm_model = Bidirectional(LSTM(lstm_output_shape, return_sequences=True))(model)
+    blstm_model = Bidirectional(LSTM(lstm_output_shape, return_sequences=False))(model)
 
     cnn_model = Conv1D(filters=512, kernel_size=5, activation='relu', padding="same",
                         kernel_regularizer=regularizers.l2(0.00001))(model)

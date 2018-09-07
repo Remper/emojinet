@@ -22,7 +22,7 @@ if __name__ == '__main__':
                         help='Maximum dictionary size')
     parser.add_argument('--max-seq-length', type=int, default=50,
                         help='Maximum sequence length')
-    parser.add_argument('--plot-cm', default=False,
+    parser.add_argument('--plot-cm', default=False, action="store_true",
                         help='Plot confusion matrix')
 
     args = parser.parse_args()
@@ -104,6 +104,11 @@ if __name__ == '__main__':
     model = model_from_json(loaded_model_json)
     model.load_weights(files.model)
 
+    def get_label_name(dictionary, label_number: int) -> str:
+        for label_name, label_value in dictionary.items():
+            if label_value == label_number:
+                return label_name
+
     # exporting predictions
     logging.info("Making predictions on the test set")
     predictions = model.predict(X_test)
@@ -119,7 +124,7 @@ if __name__ == '__main__':
             assert len_labels == len(row_pred_asc_ord)
             for label_index in reversed(range(0, len_labels)):
                 output_row["label_{}".format(len_labels - label_index)] = "{}".format(
-                    row_pred_asc_ord[len_labels - label_index - 1])
+                    get_label_name(Y_dictionary, row_pred_asc_ord[len_labels - label_index - 1]))
             predictions_file.write(json.dumps(output_row))
             predictions_file.write("\n")
 
