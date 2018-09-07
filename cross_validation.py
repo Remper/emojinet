@@ -96,7 +96,6 @@ if __name__ == "__main__":
                         help="Use user history to assist prediction")
     parser.add_argument("--gpu",
                         type=int,
-                        default=0,
                         help="GPU ID to be used [0, 1, -1]")
 
     args = parser.parse_args()

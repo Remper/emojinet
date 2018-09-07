@@ -23,7 +23,7 @@ if __name__ == '__main__':
                         help='The directory with the precomputed embeddings')
     parser.add_argument('--workdir', required=True,
                         help='Work path')
-    parser.add_argument("--gpu", type=int, default=0,
+    parser.add_argument("--gpu", default=0,
                         help="GPU ID to be used [0, 1, -1]")
     parser.add_argument('--base-model', required=True,
                         help='Model to be trained', choices=["base_cnn", "base_lstm"])
