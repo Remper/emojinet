@@ -3,12 +3,12 @@ import os
 import logging
 import numpy as np
 import subprocess
+import json
 logging.getLogger().setLevel(logging.INFO)
 
 from utils.fileprovider import FileProvider
 from preprocessing.reader import EvalitaDatasetReader, read_emoji_dist
 from sklearn.model_selection import StratifiedKFold
-from os import path
 from preprocessing.text import Tokenizer
 from keras.preprocessing import sequence
 from preprocessing.embeddings import restore_from_file
@@ -16,6 +16,30 @@ from models import get_model
 from keras.utils import to_categorical
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from os import path
+
+
+def get_label_name(dictionary, label_number: int) -> str:
+    for label_name, label_value in dictionary.items():
+        if label_value == label_number:
+            return label_name
+
+
+def process_input(tokenizer, X, user_data=None):
+    if user_data is None:
+        return [tokenizer.texts_to_sequences([text for text, uid in X])]
+
+    texts = []
+    history = []
+
+    for text, uid, tid in X:
+        texts.append(text)
+        if uid in user_data:
+            distr = user_data[uid]
+        else:
+            distr = np.zeros([user_data_size], dtype=np.float16)
+        history.append(distr)
+
+    return [tokenizer.texts_to_sequences(texts), np.array(history)]
 
 
 if __name__ == "__main__":
@@ -102,23 +126,6 @@ if __name__ == "__main__":
                     user_data[uid] = np.zeros([len(raw_train.Y_dictionary)], dtype=np.float16)
                 user_data[uid][raw_train.Y[i]] += 1
 
-    def process_input(tokenizer, X, user_data=None):
-        if user_data is None:
-            return [tokenizer.texts_to_sequences([text for text, uid in X])]
-
-        texts = []
-        history = []
-
-        for text, uid, tid in X:
-            texts.append(text)
-            if uid in user_data:
-                distr = user_data[uid]
-            else:
-                distr = np.zeros([user_data_size], dtype=np.float16)
-            history.append(distr)
-
-        return [tokenizer.texts_to_sequences(texts), np.array(history)]
-
     logging.info("Processing input")
     raw_train.X = np.array(raw_train.X)
 
@@ -127,12 +134,12 @@ if __name__ == "__main__":
     for train_index, val_index in skf.split(raw_train.X, raw_train.Y):
         logging.info("Starting with run number: {}".format(fold_number))
 
-        assert (subprocess.call("mkdir -p {}/{}/{}".format(args.workdir,
-                                                           "{}_{}".format(args.base_model, args.use_history),
-                                                           "fold_{}".format(fold_number)), shell=True) == 0), "unable to mkdir"
+        fold_dir = "{}_{}/{}".format(args.base_model, args.use_history, "fold_{}".format(fold_number))
 
-        files.model = path.join(args.workdir, "{}_{}/{}/{}".format(args.base_model, args.use_history, "fold_{}".format(fold_number), "model.h5"))
-        files.model_json = path.join(args.workdir, "{}_{}/{}/{}".format(args.base_model, args.use_history, "fold_{}".format(fold_number), "model.json"))
+        assert (subprocess.call("mkdir -p {}/{}".format(args.workdir, fold_dir), shell=True) == 0), "unable to mkdir"
+
+        files.model = path.join(args.workdir, fold_dir, "model.h5")
+        files.model_json = path.join(args.workdir, fold_dir, "model.json")
 
         X_train, X_val = raw_train.X[train_index], raw_train.X[val_index]
         Y_train, Y_val = raw_train.Y[train_index], raw_train.Y[val_index]
@@ -254,3 +261,22 @@ if __name__ == "__main__":
         callbacks["test"].evaluate()
 
         fold_number += 1
+
+        # exporting predictions
+        logging.info("Making predictions on the test set")
+        predictions = model.predict(X_test)
+        assert len(raw_test.X) == len(predictions)
+
+        logging.info("Exporting predictions on the test set")
+        with open("{}/predictions.json".format(args.workdir), "w") as predictions_file:
+            len_labels = len(predictions[0])
+            for row_index in range(0, len(predictions)):
+                output_row = dict()
+                output_row["tid"] = "{}".format(raw_test.X[row_index][2])  # because tuple (tweet, uid, tid)
+                row_pred_asc_ord = np.argsort(predictions[row_index])  # row_predictions in asc order
+                assert len_labels == len(row_pred_asc_ord)
+                for label_index in reversed(range(0, len_labels)):
+                    output_row["label_{}".format(len_labels - label_index)] = "{}".format(
+                        get_label_name(Y_dictionary, row_pred_asc_ord[len_labels - label_index - 1]))
+                predictions_file.write(json.dumps(output_row))
+                predictions_file.write("\n")
