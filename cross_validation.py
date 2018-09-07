@@ -132,8 +132,11 @@ if __name__ == "__main__":
 
     skf = StratifiedKFold(n_splits=args.n_folds, random_state=random_state)
     fold_number = 0
-    for train_index, val_index in skf.split(raw_train.X, raw_train.Y):
-        logging.info("Starting with run number: {}".format(fold_number))
+    skf_split = list(skf.split(raw_train.X, raw_train.Y))
+    while fold_number < skf.get_n_splits(raw_train.X, raw_train.Y):
+
+        train_index, val_index = skf_split[fold_number]
+        logging.info("Working on fold: {}".format(fold_number))
 
         fold_dir = "{}_{}/{}".format(args.base_model, args.use_history, "fold_{}".format(fold_number))
 
@@ -263,9 +266,12 @@ if __name__ == "__main__":
 
         logging.info("Evaluating")
 
-        callbacks["test"].evaluate()
+        f1_score = callbacks["test"].evaluate()
 
-        fold_number += 1
+        if f1_score < (0.015 * 0.44):
+            continue
+        else:
+            fold_number += 1
 
         # exporting predictions
         logging.info("Making predictions on the test set")
@@ -285,5 +291,3 @@ if __name__ == "__main__":
                         get_label_name(Y_dictionary, row_pred_asc_ord[len_labels - label_index - 1]))
                 predictions_file.write(json.dumps(output_row))
                 predictions_file.write("\n")
-
-        os.environ["CUDA_VISIBLE_DEVICES"] = "{}".format(1)

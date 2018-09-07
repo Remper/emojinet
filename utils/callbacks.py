@@ -19,18 +19,23 @@ class EvalCallback(Callback):
     def get_f1(self, predictions: list) -> float:
         return metrics.f1_score(self.Y_test, predictions, average="macro")
 
-    def evaluate(self) -> None:
+    def evaluate(self) -> float:
         Y_test_pred = self.get_predictions()
         name = self.name
         if len(name) > 10:
             name = name[:8] + ".."
+        accuracy_score = metrics.accuracy_score(self.Y_test, Y_test_pred)
+        precision_score = metrics.precision_score(self.Y_test, Y_test_pred, average="macro")
+        recall_score = metrics.recall_score(self.Y_test, Y_test_pred, average="macro")
+        f1_score = self.get_f1(Y_test_pred)
         logging.info("[%10s] Accuracy: %.4f, Prec: %.4f, Rec: %.4f, F1: %.4f" % (
             name,
-            metrics.accuracy_score(self.Y_test, Y_test_pred),
-            metrics.precision_score(self.Y_test, Y_test_pred, average="macro"),
-            metrics.recall_score(self.Y_test, Y_test_pred, average="macro"),
-            self.get_f1(Y_test_pred)
+            accuracy_score,
+            precision_score,
+            recall_score,
+            f1_score
         ))
+        return f1_score
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
