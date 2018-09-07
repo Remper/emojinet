@@ -1,21 +1,17 @@
 import os
 import argparse
-from keras.preprocessing import sequence
-from keras.utils import to_categorical
-
 import numpy as np
 import logging
-import json
 
 from os import path
 from models import get_model
-from keras.models import model_from_json
+from keras.preprocessing import sequence
+from keras.utils import to_categorical
 from preprocessing.embeddings import restore_from_file
 from preprocessing.reader import SemEvalDatasetReader, EvalitaDatasetReader, read_emoji_dist
 from preprocessing.text import Tokenizer
 from utils.callbacks import EvalCallback, ValidationEarlyStopping
 from utils.fileprovider import FileProvider
-#from utils.plotter import Plotter
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -184,19 +180,6 @@ if __name__ == '__main__':
         model_name += "_user"
         params["history_size"] = user_data_size
     model = get_model(model_name).apply(params)
-
-    """##### Load model"""
-
-    # needs also storing&restoring of the current epoch, also not sure Adam weights are preserved
-    #if path.exists(files.model) and path.exists(files.model_json):
-    #    logging.info("Loading model from disk")
-    #    json_file = open(files.model_json, 'r')
-    #    loaded_model_json = json_file.read()
-    #    json_file.close()
-    #    model = model_from_json(loaded_model_json)
-    #    model.load_weights(files.model)
-
-    """##### Continue with model"""
 
     print(model.summary())
 
