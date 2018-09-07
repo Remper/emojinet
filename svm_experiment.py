@@ -38,7 +38,7 @@ for elem in raw_train.Y:
     labels_train.append(elem)
 
 for elem in raw_test.Y:
-    labels_test.append()
+    labels_test.append(elem)
 
 del raw_train
 
