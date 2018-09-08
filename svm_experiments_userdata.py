@@ -91,10 +91,10 @@ for elem in raw_train.X:
 
 for elem in raw_test.X:
     texts_test.append(elem[0])
+    user_ids_test.append(elem[1])
 
 for elem in raw_train.Y:
     labels_train.append(elem)
-    user_ids_test.append(elem[1])
 
 for elem in raw_test.Y:
     labels_test.append(elem)
