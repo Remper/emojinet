@@ -4,6 +4,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from utils.fileprovider import FileProvider
 from scipy.sparse import csr_matrix, hstack
+from operator import itemgetter
 import argparse
 import string
 import re
@@ -113,8 +114,11 @@ tfidf_matrix_test = vectorizer.fit_transform(texts_test)
 del texts_train
 del texts_test
 
-complete_matrix_train = hstack([tfidf_matrix_train, csr_matrix(user_data[user_ids_train])])
-complete_matrix_test = hstack([tfidf_matrix_test, csr_matrix(user_data[user_ids_test])])
+train_csr_matrix = csr_matrix(list(itemgetter(*user_ids_train)(user_data)))
+test_csr_matrix = csr_matrix(list(itemgetter(*user_ids_test)(user_data)))
+
+complete_matrix_train = hstack([tfidf_matrix_train, train_csr_matrix])
+complete_matrix_test = hstack([tfidf_matrix_test, test_csr_matrix])
 
 logging.info("Fitting")
 
