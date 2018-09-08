@@ -64,14 +64,14 @@ maximum = user_data[raw_train.X[0][1]][0]
 for key, value in user_data.items():
     for elem in value:
         if elem < minimum:
-            min_val = elem
+            minimum = elem
         if elem > maximum:
-            max_val = elem
+            maximum = elem
 
 for key, value in user_data.items():
     temp_list = []
     for elem in value:
-        temp_list.append(normalize(elem, min_val, max_val))
+        temp_list.append(normalize(elem, minimum, maximum))
     new_vector = np.array(temp_list)
     user_data[key] = new_vector
 
