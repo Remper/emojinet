@@ -108,7 +108,7 @@ vectorizer = TfidfVectorizer()
 
 logging.info("Vectorizing")
 
-vectorzer.fit(texts_train)
+vectorizer.fit(texts_train)
 
 tfidf_matrix_train = vectorizer.transform(texts_train)
 tfidf_matrix_test = vectorizer.transform(texts_test)
