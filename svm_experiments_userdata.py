@@ -63,9 +63,9 @@ maximum = user_data[raw_train.X[0][1]][0]
 
 for key, value in user_data.items():
     for elem in value:
-        if elem < min_val:
+        if elem < minimum:
             min_val = elem
-        if elem > max_val:
+        if elem > maximum:
             max_val = elem
 
 for key, value in user_data.items():
