@@ -121,15 +121,11 @@ if __name__ == "__main__":
 
         max_seq_length = model.layers[0].output_shape[1]
 
-        logging.info("Processing train")
-        X_train = process_input(tokenizer, evalita_raw_train.X, user_data)
         logging.info("Processing test")
         X_test = process_input(tokenizer, evalita_raw_real_test.X, user_data)
 
         Y_dictionary = evalita_raw_train.Y_dictionary
 
-        logging.info("Padding train")
-        X_train[0] = sequence.pad_sequences(X_train[0], maxlen=max_seq_length)
         logging.info("Padding test")
         X_test[0] = sequence.pad_sequences(X_test[0], maxlen=max_seq_length)
 
