@@ -127,7 +127,10 @@ if __name__ == "__main__":
         #model.load_weights("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
 
         model = load_model("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
-        model._make_predict_function()
+        session.run(tf.global_variables_initializer())
+        model.load_weights("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
+        default_graph = tf.get_default_graph()
+        default_graph.finalize()
 
         max_seq_length = model.layers[0].output_shape[1]
 
