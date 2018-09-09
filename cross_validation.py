@@ -31,7 +31,7 @@ def export_predictions(file_path, predictions, raw_input):
         for row_index in range(0, len(predictions)):
             output_row = dict()
             output_row["tid"] = "{}".format(raw_input.X[row_index][2])  # because tuple (tweet, uid, tid)
-            row_pred_desc_ord = reversed(np.argsort(predictions[row_index]))  # row_predictions in desc order
+            row_pred_desc_ord = list(reversed(np.argsort(predictions[row_index])))  # row_predictions in desc order
             assert len_labels == len(row_pred_desc_ord)
             for label_index in range(0, len_labels):
                 output_row["label_{}".format(label_index + 1)] = "{}".format(get_label_name(Y_dictionary, row_pred_desc_ord[label_index]))
@@ -328,6 +328,5 @@ if __name__ == "__main__":
         export_predictions(file_path="{}/{}/real_average_predictions.json".format(args.workdir, fold_dir),
                            predictions=real_average_predictions,
                            raw_input=raw_real_test)
-
 
         fold_number += 1
