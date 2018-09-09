@@ -136,12 +136,12 @@ if __name__ == "__main__":
         test_predictions = model.predict(X_test)
         fold_predictions.append(test_predictions)
 
-        accuracy_score = metrics.accuracy_score(evalita_raw_test.Y, np.argmax(test_predictions))
-        precision_score = metrics.precision_score(evalita_raw_test.Y, np.argmax(test_predictions),
+        accuracy_score = metrics.accuracy_score(evalita_raw_test.Y, [np.argmax(prediction) for prediction in test_predictions])
+        precision_score = metrics.precision_score(evalita_raw_test.Y, [np.argmax(prediction) for prediction in test_predictions],
                                                   average="macro")
-        recall_score = metrics.recall_score(evalita_raw_test.Y, np.argmax(test_predictions),
+        recall_score = metrics.recall_score(evalita_raw_test.Y, [np.argmax(prediction) for prediction in test_predictions],
                                             average="macro")
-        f1_score = metrics.f1_score(evalita_raw_test.Y, np.argmax(test_predictions), average="macro")
+        f1_score = metrics.f1_score(evalita_raw_test.Y, [np.argmax(prediction) for prediction in test_predictions], average="macro")
         logging.info("[%10s] Accuracy: %.4f, Prec: %.4f, Rec: %.4f, F1: %.4f" % (
             "fake_test fold_{}".format(fold_number),
             accuracy_score,
@@ -165,10 +165,10 @@ if __name__ == "__main__":
                        predictions=real_test_folds_average_predictions,
                        raw_input = evalita_raw_test)
 
-    accuracy_score = metrics.accuracy_score(evalita_raw_test.Y, np.argmax(real_test_folds_average_predictions))
-    precision_score = metrics.precision_score(evalita_raw_test.Y, np.argmax(real_test_folds_average_predictions), average="macro")
-    recall_score = metrics.recall_score(evalita_raw_test.Y, np.argmax(real_test_folds_average_predictions), average="macro")
-    f1_score = metrics.f1_score(evalita_raw_test.Y, np.argmax(real_test_folds_average_predictions), average="macro")
+    accuracy_score = metrics.accuracy_score(evalita_raw_test.Y, [np.argmax(prediction) for prediction in real_test_folds_average_predictions])
+    precision_score = metrics.precision_score(evalita_raw_test.Y, [np.argmax(prediction) for prediction in real_test_folds_average_predictions], average="macro")
+    recall_score = metrics.recall_score(evalita_raw_test.Y, [np.argmax(prediction) for prediction in real_test_folds_average_predictions], average="macro")
+    f1_score = metrics.f1_score(evalita_raw_test.Y, [np.argmax(prediction) for prediction in real_test_folds_average_predictions], average="macro")
     logging.info("[%10s] Accuracy: %.4f, Prec: %.4f, Rec: %.4f, F1: %.4f" % (
         "fake_test",
         accuracy_score,
