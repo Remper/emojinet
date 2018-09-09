@@ -6,7 +6,7 @@ import json
 import numpy as np
 from utils.fileprovider import FileProvider
 from preprocessing.reader import EvalitaDatasetReader, read_emoji_dist
-from keras.models import model_from_json
+from keras.models import model_from_json, load_model
 from keras.preprocessing import sequence
 
 logging.getLogger().setLevel(logging.INFO)
@@ -113,12 +113,13 @@ if __name__ == "__main__":
             tokenizer = pickle.load(tokenizer_file)
 
         logging.info("Loading model")
-        json_file = open("{}/fold_{}/model.json".format(input_dir_path, fold_number), "r")
-        loaded_model_json = json_file.read()
-        json_file.close()
-        model = model_from_json(loaded_model_json)
-        model.load_weights("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
+        #json_file = open("{}/fold_{}/model.json".format(input_dir_path, fold_number), "r")
+        #loaded_model_json = json_file.read()
+        #json_file.close()
+        #model = model_from_json(loaded_model_json)
+        #model.load_weights("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
 
+        model = load_model("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
         max_seq_length = model.layers[0].output_shape[1]
 
         logging.info("Processing test")
