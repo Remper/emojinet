@@ -4,6 +4,7 @@ import pickle
 import os
 import json
 import numpy as np
+from sklearn import metrics
 from utils.fileprovider import FileProvider
 from preprocessing.reader import EvalitaDatasetReader, read_emoji_dist
 from keras.models import model_from_json
@@ -149,6 +150,18 @@ if __name__ == "__main__":
     export_predictions(file_path="{}/fake_test_average_predictions.json".format(input_dir_path),
                        predictions=real_test_folds_average_predictions,
                        raw_input = evalita_raw_test)
+
+    accuracy_score = metrics.accuracy_score(evalita_raw_test.Y, np.argmax(real_test_folds_average_predictions))
+    precision_score = metrics.precision_score(evalita_raw_test.Y, np.argmax(real_test_folds_average_predictions), average="macro")
+    recall_score = metrics.recall_score(evalita_raw_test.Y, np.argmax(real_test_folds_average_predictions), average="macro")
+    f1_score = metrics.f1_score(evalita_raw_test.Y, np.argmax(real_test_folds_average_predictions), average="macro")
+    logging.info("[%10s] Accuracy: %.4f, Prec: %.4f, Rec: %.4f, F1: %.4f" % (
+        "fake_test",
+        accuracy_score,
+        precision_score,
+        recall_score,
+        f1_score
+    ))
 
 
 
