@@ -128,7 +128,6 @@ if __name__ == "__main__":
 
         model = load_model("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
         model._make_predict_function()
-        session.run(tf.global_variables_initializer())
 
         max_seq_length = model.layers[0].output_shape[1]
 
