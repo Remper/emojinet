@@ -283,18 +283,6 @@ if __name__ == "__main__":
 
         f1_score = callbacks["test"].evaluate()
 
-        if args.use_history == "userdata":
-            reference = 0.44
-            delta = 0.015 * reference
-        else: # history == train
-            reference = 0.425
-            delta = 0.015 * 0.425
-
-        if f1_score < (reference - delta):
-            continue
-        else:
-            fold_number += 1
-
         # FAKE PREDICTIONS
         logging.info("Making predictions on the fake test set")
         fake_predictions = model.predict(X_test)
@@ -330,3 +318,15 @@ if __name__ == "__main__":
         export_predictions(file_path="{}/{}/real_average_predictions.json".format(args.workdir, fold_dir),
                            predictions=real_average_predictions,
                            raw_input=raw_real_test)
+
+        if args.use_history == "userdata":
+            reference = 0.44
+            delta = 0.015 * reference
+        else: # history == train
+            reference = 0.425
+            delta = 0.015 * 0.425
+
+        if f1_score < (reference - delta):
+            continue
+        else:
+            fold_number += 1
