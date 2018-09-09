@@ -242,9 +242,9 @@ if __name__ == "__main__":
         Y_train_one_hot = to_categorical(Y_train, num_classes=len(Y_dictionary))
 
         callbacks = {
-            "test": EvalCallback("test", X_test, Y_test),
-            "train": EvalCallback("train", X_train, Y_train, period=5),
-            "val": EvalCallback("validation", X_val, Y_val)
+            "test": EvalCallback("test", X_test, Y_test, period=10),
+            "train": EvalCallback("train", X_train, Y_train, period=10),
+            "val": EvalCallback("validation", X_val, Y_val, period=10)
         }
         callbacks["stop"] = ValidationEarlyStopping(monitor=callbacks["val"])
         model.fit(X_train,
@@ -255,23 +255,31 @@ if __name__ == "__main__":
                   shuffle=True,
                   callbacks=[callback for callback in callbacks.values()])
 
-        logging.info("Saving model to json")
+        #logging.info("Saving model to json")
 
-        model_json = model.to_json()
-        with open(files.model_json, "w", encoding="utf-8") as json_file:
-            json_file.write(model_json)
+        #model_json = model.to_json()
+        #with open(files.model_json, "w", encoding="utf-8") as json_file:
+        #    json_file.write(model_json)
 
-        logging.info("Saving model weights")
+        #logging.info("Saving model weights")
 
-        model.save_weights(files.model)
+        #model.save_weights(files.model)
+
+        logging.info("Saving model")
+        model.save(files.model)
 
         logging.info("Evaluating")
 
         f1_score = callbacks["test"].evaluate()
 
-        delta = 0.015 * 0.44
-        if f1_score < (0.44 - delta):
-            print("here")
+        if args.use_history == "userdata":
+            reference = 0.44
+            delta = 0.015 * reference
+        else: #train
+            reference = 0.425
+            delta = 0.015 * 0.425
+
+        if f1_score < (reference - delta):
             continue
         else:
             fold_number += 1
@@ -282,7 +290,7 @@ if __name__ == "__main__":
         assert len(raw_test.X) == len(predictions)
 
         logging.info("Exporting predictions on the test set")
-        with open("{}/{}/predictions.json".format(args.workdir, fold_dir), "w") as predictions_file:
+        with open("{}/{}/fake_predictions.json".format(args.workdir, fold_dir), "w") as predictions_file:
             len_labels = len(predictions[0])
             for row_index in range(0, len(predictions)):
                 output_row = dict()
@@ -292,5 +300,25 @@ if __name__ == "__main__":
                 for label_index in reversed(range(0, len_labels)):
                     output_row["label_{}".format(len_labels - label_index)] = "{}".format(
                         get_label_name(Y_dictionary, row_pred_asc_ord[len_labels - label_index - 1]))
+                predictions_file.write(json.dumps(output_row))
+                predictions_file.write("\n")
+
+        logging.info("Reading real test")
+        evalita_raw_real_test = EvalitaDatasetReader(files.evalita_real_test)
+        X_real_test = process_input(tokenizer, evalita_raw_real_test.X, user_data)
+        X_real_test[0] = sequence.pad_sequences(X_real_test[0], maxlen=max_seq_length)
+        predictions = model.predict(X_real_test)
+
+        logging.info("Exporting predictions on the test set")
+        with open("{}/{}/real_predictions.json".format(args.workdir, fold_dir), "w") as predictions_file:
+            len_labels = len(predictions[0])
+            for row_index in range(0, len(predictions)):
+                output_row = dict()
+                output_row["tid"] = "{}".format(raw_test.X[row_index][2])  # because tuple (tweet, uid, tid)
+                row_pred_asc_ord = np.argsort(predictions[row_index])  # row_predictions in asc order
+                assert len_labels == len(row_pred_asc_ord)
+                for label_index in reversed(range(0, len_labels)):
+                    output_row["label_{}".format(len_labels - label_index)] = "{}".format(
+                        get_label_name(Y_dictionary, row_pred_asc_ord[label_index]))
                 predictions_file.write(json.dumps(output_row))
                 predictions_file.write("\n")
