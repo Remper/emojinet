@@ -4,10 +4,8 @@ import pickle
 import os
 import json
 import numpy as np
-from numpy.random import seed
-seed(1)
-from tensorflow import set_random_seed
-set_random_seed(2)
+import tensorflow as tf
+from keras.layers import K
 from utils.fileprovider import FileProvider
 from preprocessing.reader import EvalitaDatasetReader, read_emoji_dist
 from keras.models import model_from_json, load_model
@@ -56,6 +54,11 @@ def export_predictions(file_path, predictions, raw_input):
 
 
 if __name__ == "__main__":
+    session = tf.Session()
+    K.set_session(session)
+    K.manual_variable_initialization(True)
+
+
     """##### Parameter parsing"""
 
     parser = argparse.ArgumentParser(description="Predictions comparison for EVALITA2018 ITAmoji task")
@@ -124,6 +127,12 @@ if __name__ == "__main__":
         #model.load_weights("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
 
         model = load_model("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
+        model._make_predict_function()
+        session.run(tf.global_variables_initializer())
+        model.load_weights("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
+        default_graph = tf.get_default_graph()
+        default_graph.finalize()
+
         max_seq_length = model.layers[0].output_shape[1]
 
         logging.info("Processing test")
