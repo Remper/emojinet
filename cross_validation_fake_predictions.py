@@ -136,6 +136,20 @@ if __name__ == "__main__":
         test_predictions = model.predict(X_test)
         fold_predictions.append(test_predictions)
 
+        accuracy_score = metrics.accuracy_score(evalita_raw_test.Y, np.argmax(test_predictions))
+        precision_score = metrics.precision_score(evalita_raw_test.Y, np.argmax(test_predictions),
+                                                  average="macro")
+        recall_score = metrics.recall_score(evalita_raw_test.Y, np.argmax(test_predictions),
+                                            average="macro")
+        f1_score = metrics.f1_score(evalita_raw_test.Y, np.argmax(test_predictions), average="macro")
+        logging.info("[%10s] Accuracy: %.4f, Prec: %.4f, Rec: %.4f, F1: %.4f" % (
+            "fake_test fold_{}".format(fold_number),
+            accuracy_score,
+            precision_score,
+            recall_score,
+            f1_score
+        ))
+
         logging.info("Exporting fake test predictions")
         export_predictions(file_path="{}/fold_{}/fake_test_predictions.json".format(input_dir_path, fold_number),
                            predictions=test_predictions,
