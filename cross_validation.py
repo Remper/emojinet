@@ -306,6 +306,7 @@ if __name__ == "__main__":
         logging.info("Reading real test")
         evalita_raw_real_test = EvalitaDatasetReader(files.evalita_real_test)
         X_real_test = process_input(tokenizer, evalita_raw_real_test.X, user_data)
+        X_real_test[0] = sequence.pad_sequences(X_real_test[0], maxlen=max_seq_length)
         predictions = model.predict(X_real_test)
 
         logging.info("Exporting predictions on the test set")
