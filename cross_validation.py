@@ -125,7 +125,7 @@ if __name__ == "__main__":
     raw_train = EvalitaDatasetReader(files.evalita)
     random_state = 42
     raw_train, raw_test = raw_train.split(test_size=0.1, random_state=random_state)
-    raw_real_test = EvalitaDatasetReader(files.evalita_test)
+    raw_real_test = EvalitaDatasetReader(files.evalita_real_test)
 
     logging.info("Populating user history")
     user_data = None
