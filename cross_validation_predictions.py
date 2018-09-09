@@ -4,7 +4,10 @@ import pickle
 import os
 import json
 import numpy as np
-np.random.seed(1234)
+from numpy.random import seed
+seed(1)
+from tensorflow import set_random_seed
+set_random_seed(2)
 from utils.fileprovider import FileProvider
 from preprocessing.reader import EvalitaDatasetReader, read_emoji_dist
 from keras.models import model_from_json, load_model
