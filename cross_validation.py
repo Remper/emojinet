@@ -25,9 +25,23 @@ def get_label_name(dictionary, label_number: int) -> str:
             return label_name
 
 
+def export_predictions(file_path, predictions, raw_input):
+    with open(file_path, "w") as predictions_file:
+        len_labels = len(predictions[0])
+        for row_index in range(0, len(predictions)):
+            output_row = dict()
+            output_row["tid"] = "{}".format(raw_input.X[row_index][2])  # because tuple (tweet, uid, tid)
+            row_pred_desc_ord = reversed(np.argsort(predictions[row_index]))  # row_predictions in desc order
+            assert len_labels == len(row_pred_desc_ord)
+            for label_index in range(0, len_labels):
+                output_row["label_{}".format(label_index + 1)] = "{}".format(get_label_name(Y_dictionary, row_pred_desc_ord[label_index]))
+            predictions_file.write(json.dumps(output_row))
+            predictions_file.write("\n")
+
+
 def process_input(tokenizer, X, user_data=None):
     if user_data is None:
-        return [tokenizer.texts_to_sequences([text for text, uid in X])]
+        return [tokenizer.texts_to_sequences([text for text, uid, tid in X])]
 
     texts = []
     history = []
@@ -111,6 +125,7 @@ if __name__ == "__main__":
     raw_train = EvalitaDatasetReader(files.evalita)
     random_state = 42
     raw_train, raw_test = raw_train.split(test_size=0.1, random_state=random_state)
+    raw_real_test = EvalitaDatasetReader(files.evalita_test)
 
     logging.info("Populating user history")
     user_data = None
@@ -133,6 +148,9 @@ if __name__ == "__main__":
     skf = StratifiedKFold(n_splits=args.n_folds, random_state=random_state)
     fold_number = 0
     skf_split = list(skf.split(raw_train.X, raw_train.Y))
+
+    fake_folds_predictions = []
+    real_folds_predictions = []
 
     while fold_number < skf.get_n_splits(raw_train.X, raw_train.Y):
 
@@ -164,6 +182,8 @@ if __name__ == "__main__":
         X_test = process_input(tokenizer, raw_test.X, user_data)
         Y_test = raw_test.Y
 
+        X_real_test = process_input(tokenizer, raw_real_test.X, user_data)
+
         Y_dictionary = raw_train.Y_dictionary
         Y_class_weights = len(Y_train) / np.power(np.bincount(Y_train), 1.1)
         Y_class_weights *= 1.0 / np.min(Y_class_weights)
@@ -179,6 +199,7 @@ if __name__ == "__main__":
         X_train[0] = sequence.pad_sequences(X_train[0], maxlen=max_seq_length)
         X_val[0] = sequence.pad_sequences(X_val[0], maxlen=max_seq_length)
         X_test[0] = sequence.pad_sequences(X_test[0], maxlen=max_seq_length)
+        X_real_test[0] = sequence.pad_sequences(X_real_test[0], maxlen=max_seq_length)
 
         """##### Initializing embeddings"""
         logging.info("Initializing embeddings")
@@ -255,16 +276,6 @@ if __name__ == "__main__":
                   shuffle=True,
                   callbacks=[callback for callback in callbacks.values()])
 
-        #logging.info("Saving model to json")
-
-        #model_json = model.to_json()
-        #with open(files.model_json, "w", encoding="utf-8") as json_file:
-        #    json_file.write(model_json)
-
-        #logging.info("Saving model weights")
-
-        #model.save_weights(files.model)
-
         logging.info("Saving model")
         model.save(files.model)
 
@@ -275,7 +286,7 @@ if __name__ == "__main__":
         if args.use_history == "userdata":
             reference = 0.44
             delta = 0.015 * reference
-        else: #train
+        else: # history == train
             reference = 0.425
             delta = 0.015 * 0.425
 
@@ -284,41 +295,38 @@ if __name__ == "__main__":
         else:
             fold_number += 1
 
-        # exporting predictions
-        logging.info("Making predictions on the test set")
-        predictions = model.predict(X_test)
-        assert len(raw_test.X) == len(predictions)
+        # FAKE PREDICTIONS
+        logging.info("Making predictions on the fake test set")
+        fake_predictions = model.predict(X_test)
+        export_predictions(file_path="{}/{}/fake_predictions.json".format(args.workdir, fold_dir),
+                           predictions=fake_predictions,
+                           raw_input=raw_test)
+        fake_folds_predictions.append(fake_predictions)
 
-        logging.info("Exporting predictions on the test set")
-        with open("{}/{}/fake_predictions.json".format(args.workdir, fold_dir), "w") as predictions_file:
-            len_labels = len(predictions[0])
-            for row_index in range(0, len(predictions)):
-                output_row = dict()
-                output_row["tid"] = "{}".format(raw_test.X[row_index][2])  # because tuple (tweet, uid, tid)
-                row_pred_asc_ord = np.argsort(predictions[row_index])  # row_predictions in asc order
-                assert len_labels == len(row_pred_asc_ord)
-                for label_index in reversed(range(0, len_labels)):
-                    output_row["label_{}".format(len_labels - label_index)] = "{}".format(
-                        get_label_name(Y_dictionary, row_pred_asc_ord[len_labels - label_index - 1]))
-                predictions_file.write(json.dumps(output_row))
-                predictions_file.write("\n")
+        fake_average_predictions = np.zeros(fake_folds_predictions[0].shape)
+        for fake_prediction in fake_folds_predictions:
+            fake_average_predictions = np.add(fake_average_predictions, fake_prediction)
+            fake_average_predictions = fake_average_predictions / (fold_number + 1) # since fold_number is 0 indexed
 
-        logging.info("Reading real test")
-        evalita_raw_real_test = EvalitaDatasetReader(files.evalita_real_test)
-        X_real_test = process_input(tokenizer, evalita_raw_real_test.X, user_data)
-        X_real_test[0] = sequence.pad_sequences(X_real_test[0], maxlen=max_seq_length)
-        predictions = model.predict(X_real_test)
+        logging.info("Exporting fake average predictions")
+        export_predictions(file_path="{}/{}/fake_average_predictions.json".format(args.workdir, fold_dir),
+                           predictions=fake_average_predictions,
+                           raw_input=raw_test)
 
-        logging.info("Exporting predictions on the test set")
-        with open("{}/{}/real_predictions.json".format(args.workdir, fold_dir), "w") as predictions_file:
-            len_labels = len(predictions[0])
-            for row_index in range(0, len(predictions)):
-                output_row = dict()
-                output_row["tid"] = "{}".format(raw_test.X[row_index][2])  # because tuple (tweet, uid, tid)
-                row_pred_asc_ord = np.argsort(predictions[row_index])  # row_predictions in asc order
-                assert len_labels == len(row_pred_asc_ord)
-                for label_index in reversed(range(0, len_labels)):
-                    output_row["label_{}".format(len_labels - label_index)] = "{}".format(
-                        get_label_name(Y_dictionary, row_pred_asc_ord[label_index]))
-                predictions_file.write(json.dumps(output_row))
-                predictions_file.write("\n")
+        # REAL PREDICTIONS
+        logging.info("Making predictions on the real test set")
+        real_predictions = model.predict(X_real_test)
+        export_predictions(file_path="{}/{}/real_predictions.json".format(args.workdir, fold_dir),
+                           predictions=real_predictions,
+                           raw_input=raw_real_test)
+        real_folds_predictions.append(real_predictions)
+
+        real_average_predictions = np.zeros(real_folds_predictions[0].shape)
+        for real_prediction in real_folds_predictions:
+            real_average_predictions = np.add(real_average_predictions, real_prediction)
+            real_average_predictions = real_average_predictions / (fold_number + 1) # since fold_number is 0 indexed
+
+        logging.info("Exporting real average predictions")
+        export_predictions(file_path="{}/{}/real_average_predictions.json".format(args.workdir, fold_dir),
+                           predictions=real_average_predictions,
+                           raw_input=raw_real_test)
