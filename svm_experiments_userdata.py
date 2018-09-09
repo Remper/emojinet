@@ -4,6 +4,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from utils.fileprovider import FileProvider
 from scipy.sparse import csr_matrix, hstack
+from operator import itemgetter
 import argparse
 import string
 import re
@@ -63,15 +64,15 @@ maximum = user_data[raw_train.X[0][1]][0]
 
 for key, value in user_data.items():
     for elem in value:
-        if elem < min_val:
-            min_val = elem
-        if elem > max_val:
-            max_val = elem
+        if elem < minimum:
+            minimum = elem
+        if elem > maximum:
+            maximum = elem
 
 for key, value in user_data.items():
     temp_list = []
     for elem in value:
-        temp_list.append(normalize(elem, min_val, max_val))
+        temp_list.append(normalize(elem, minimum, maximum))
     new_vector = np.array(temp_list)
     user_data[key] = new_vector
 
@@ -91,10 +92,10 @@ for elem in raw_train.X:
 
 for elem in raw_test.X:
     texts_test.append(elem[0])
+    user_ids_test.append(elem[1])
 
 for elem in raw_train.Y:
     labels_train.append(elem)
-    user_ids_test.append(elem[1])
 
 for elem in raw_test.Y:
     labels_test.append(elem)
@@ -107,14 +108,19 @@ vectorizer = TfidfVectorizer()
 
 logging.info("Vectorizing")
 
-tfidf_matrix_train = vectorizer.fit_transform(texts_train)
-tfidf_matrix_test = vectorizer.fit_transform(texts_test)
+vectorizer.fit(texts_train)
+
+tfidf_matrix_train = vectorizer.transform(texts_train)
+tfidf_matrix_test = vectorizer.transform(texts_test)
 
 del texts_train
 del texts_test
 
-complete_matrix_train = hstack([tfidf_matrix_train, csr_matrix(user_data[user_ids_train])])
-complete_matrix_test = hstack([tfidf_matrix_test, csr_matrix(user_data[user_ids_test])])
+train_csr_matrix = csr_matrix(list(itemgetter(*user_ids_train)(user_data)))
+test_csr_matrix = csr_matrix(list(itemgetter(*user_ids_test)(user_data)))
+
+complete_matrix_train = hstack([tfidf_matrix_train, train_csr_matrix])
+complete_matrix_test = hstack([tfidf_matrix_test, test_csr_matrix])
 
 logging.info("Fitting")
 
@@ -127,9 +133,9 @@ prediction = clf.predict(complete_matrix_test)
 
 logging.info("Dumping scores")
 
-scores_file = open('scores_file.txt', 'w')
+scores_file = open('scores_file_userdata.txt', 'w')
 
-scores_file.write('Accuracy: ' + str(accuracy_score(prediction, labels_test, average='macro')) + '\n')
+scores_file.write('Accuracy: ' + str(accuracy_score(prediction, labels_test)) + '\n')
 scores_file.write('Precision: ' + str(precision_score(prediction, labels_test, average='macro')) + '\n')
 scores_file.write('Recall: ' + str(recall_score(prediction, labels_test, average='macro')) + '\n')
 scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test, average='macro')) + '\n')
