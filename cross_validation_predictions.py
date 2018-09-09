@@ -66,10 +66,6 @@ if __name__ == "__main__":
     parser.add_argument("--input-dir",
                         required=True,
                         help="Input dir path")
-    parser.add_argument("--max-seq-length",
-                        type=int,
-                        default=48,
-                        help="Maximum sequence length")
     parser.add_argument("--folds-number",
                         type=int,
                         default=10,
@@ -123,6 +119,8 @@ if __name__ == "__main__":
         model = model_from_json(loaded_model_json)
         model.load_weights("{}/fold_{}/model.h5".format(input_dir_path, fold_number))
 
+        max_seq_length = model.layers[0].output_shape[1]
+
         logging.info("Processing train")
         X_train = process_input(tokenizer, evalita_raw_train.X, user_data)
         logging.info("Processing test")
@@ -131,9 +129,9 @@ if __name__ == "__main__":
         Y_dictionary = evalita_raw_train.Y_dictionary
 
         logging.info("Padding train")
-        X_train[0] = sequence.pad_sequences(X_train[0], maxlen=args.max_seq_length)
+        X_train[0] = sequence.pad_sequences(X_train[0], maxlen=max_seq_length)
         logging.info("Padding test")
-        X_test[0] = sequence.pad_sequences(X_test[0], maxlen=args.max_seq_length)
+        X_test[0] = sequence.pad_sequences(X_test[0], maxlen=max_seq_length)
 
         logging.info("Making test predictions")
         test_predictions = model.predict(X_test)
