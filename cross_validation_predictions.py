@@ -53,6 +53,10 @@ if __name__ == "__main__":
                         type=int,
                         default=48,
                         help="Maximum sequence length")
+    parser.add_argument("--gpu",
+                        type=int,
+                        default=0,
+                        help="GPU ID to be used [0, 1, -1]")
 
     args = parser.parse_args()
     files = FileProvider(args.workdir)
@@ -79,6 +83,7 @@ if __name__ == "__main__":
                 if uid not in user_data:
                     user_data[uid] = np.zeros([len(evalita_raw_train.Y_dictionary)], dtype=np.float16)
                 user_data[uid][evalita_raw_train.Y[i]] += 1
+
 
     for fold_number in range(0, 10):
         logging.info("Working on fold: {}".format(fold_number))
@@ -108,7 +113,7 @@ if __name__ == "__main__":
 
         logging.info("Making test predictions")
         train_predictions = model.predict(X_train)
-        print(train_predictions)
+        print(np.argsort(train_predictions[0]))
 
         break
 
