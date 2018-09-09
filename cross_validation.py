@@ -281,7 +281,7 @@ if __name__ == "__main__":
 
         logging.info("Evaluating")
 
-        f1_score = callbacks["test"].evaluate()
+        f1_score = callbacks["val"].evaluate()
 
         if args.use_history == "userdata":
             reference = 0.44
