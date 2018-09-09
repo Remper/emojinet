@@ -13,3 +13,4 @@ class FileProvider:
         self.evalita_emoji_dist = path.join(self.input_dir, 'emoji_dist.tsv')
         self.evalita_train = path.join(self.input_dir, 'evalita_split_train.json')
         self.evalita_test = path.join(self.input_dir, 'evalita_split_test.json')
+        self.evalita_real_test = path.join(self.input_dir, "ITAmoji_2018_TESTdataset_v1.list")

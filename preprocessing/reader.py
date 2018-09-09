@@ -130,10 +130,11 @@ class EvalitaDatasetReader(DatasetReader):
                 line = line.rstrip()
                 sample = json.loads(line)
                 texts.append((sample["text_no_emoji"], sample["uid"], sample["tid"]))
-                label = sample["label"]
-                if label not in dictionary:
-                    dictionary[label] = len(dictionary)
-                labels.append(dictionary[label])
+                if sample.get("label", None) is not None:
+                    label = sample["label"]
+                    if label not in dictionary:
+                        dictionary[label] = len(dictionary)
+                    labels.append(dictionary[label])
 
                 row += 1
                 if row % 10000 == 0:
