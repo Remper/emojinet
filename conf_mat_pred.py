@@ -124,7 +124,7 @@ if __name__ == '__main__':
             assert len_labels == len(row_pred_asc_ord)
             for label_index in reversed(range(0, len_labels)):
                 output_row["label_{}".format(len_labels - label_index)] = "{}".format(
-                    get_label_name(Y_dictionary, row_pred_asc_ord[len_labels - label_index - 1]))
+                    get_label_name(Y_dictionary, row_pred_asc_ord[label_index]))
             predictions_file.write(json.dumps(output_row))
             predictions_file.write("\n")
 
