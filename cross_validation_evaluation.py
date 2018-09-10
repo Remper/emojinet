@@ -41,7 +41,7 @@ if __name__ == "__main__":
                 label_dictionary[sample["label"]] = len(label_dictionary)
     logging.info("Loaded %d gold standard tweets (%d duplicates)" % (len(samples), duplicates))
 
-    folds = os.listdir(input_file_path)
+    folds = sorted(os.listdir(input_file_path))
     for fold in folds:
         if not fold.startswith("fold"):
             continue
@@ -50,13 +50,13 @@ if __name__ == "__main__":
         # Loading test set predictions
         predictions = []
         gold = []
-        with open(path.join(fold_dir, "fake_predictions.json"), "r", encoding="utf-8") as reader:
+        with open(path.join(fold_dir, "fake_average_predictions.json"), "r", encoding="utf-8") as reader:
             for line in reader:
                 sample = json.loads(line.rstrip())
                 if sample["tid"] not in samples:
                     logging.warning("[%s] Tweet %s was not found in gold standard" % (fold, sample["tid"]))
                     continue
-                predictions.append(sample["label_25"])
+                predictions.append(sample["label_1"])
                 gold.append(samples[sample["tid"]])
         logging.info("[%s] Loaded %d predictions" % (fold, len(predictions)))
 
@@ -71,3 +71,15 @@ if __name__ == "__main__":
             recall_score,
             f1_score
         ))
+
+        for file in ["real_predictions.json", "real_average_predictions.json"]:
+            dist = {}
+            lines = 0
+            with open(path.join(fold_dir, file), "r", encoding="utf-8") as reader:
+                for line in reader:
+                    sample = json.loads(line.rstrip())
+                    if sample["label_1"] not in dist:
+                        dist[sample["label_1"]] = 0
+                    dist[sample["label_1"]] += 1
+                    lines += 1
+            print("["+file+"] Distribution: "+"\t".join([tuple[0]+":"+str(float(tuple[1])/lines) for tuple in sorted([(label, dist[label]) for label in dist], key= lambda x : -x[1])[:3]]))
