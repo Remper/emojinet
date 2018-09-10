@@ -46,6 +46,7 @@ for elem in raw_test.Y:
 del raw_train
 
 texts_train = process_text(texts_train)
+texts_test = process_text(texts_test)
 
 vectorizer = TfidfVectorizer()
 

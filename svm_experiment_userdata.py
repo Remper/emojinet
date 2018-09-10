@@ -103,6 +103,7 @@ for elem in raw_test.Y:
 del raw_train
 
 texts_train = process_text(texts_train)
+texts_test = process_text(texts_test)
 
 vectorizer = TfidfVectorizer()
 
@@ -116,11 +117,11 @@ tfidf_matrix_test = vectorizer.transform(texts_test)
 del texts_train
 del texts_test
 
-train_csr_matrix = csr_matrix(list(itemgetter(*user_ids_train)(user_data)))
-test_csr_matrix = csr_matrix(list(itemgetter(*user_ids_test)(user_data)))
+train_user_matrix = csr_matrix(list(itemgetter(*user_ids_train)(user_data)))
+test_user_matrix = csr_matrix(list(itemgetter(*user_ids_test)(user_data)))
 
-complete_matrix_train = hstack([tfidf_matrix_train, train_csr_matrix])
-complete_matrix_test = hstack([tfidf_matrix_test, test_csr_matrix])
+complete_matrix_train = csr_matrix(hstack([tfidf_matrix_train, train_user_matrix]))
+complete_matrix_test = csr_matrix(hstack([tfidf_matrix_test, test_user_matrix]))
 
 logging.info("Fitting")
 
@@ -143,4 +144,4 @@ scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test, average='
 scores_file.close()
 
 logging.info("Done!")
-
+'''
