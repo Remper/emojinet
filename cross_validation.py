@@ -285,7 +285,7 @@ if __name__ == "__main__":
 
         if args.use_history == "userdata":
             reference = 0.44
-            delta = 0.015 * reference
+            delta = 0.035 * reference
         else: # history == train
             reference = 0.425
             delta = 0.015 * 0.425
