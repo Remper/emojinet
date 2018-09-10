@@ -144,4 +144,3 @@ scores_file.write('F1-score: ' + str(f1_score(prediction, labels_test, average='
 scores_file.close()
 
 logging.info("Done!")
-'''
